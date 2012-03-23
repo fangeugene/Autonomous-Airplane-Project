@@ -32,7 +32,8 @@ void setup()
 	timer = millis();
 }
 
-static const uint8_t channel_map[6] = { 1, 2, 0, 4, 5, 6};
+//static const uint8_t channel_map[6] = { 1, 2, 0, 4, 5, 6};
+static const uint8_t channel_map[6] = { 1, 1, 1, 1, 1, 1};
 float v;
 uint32_t last_usec = 0;
 
