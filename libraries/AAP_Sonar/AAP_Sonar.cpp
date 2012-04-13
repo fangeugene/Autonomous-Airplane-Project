@@ -6,7 +6,7 @@
 
 
 	Methods:
-		getDistance() : read value from analog port and return distance
+		getDistance() : read value from analog port and return distance in cm
 
 */
 
@@ -15,7 +15,7 @@
 
 // vars
 volatile int raw = 0;
-volatile float inches = 0;
+volatile float cm = 0;
 
 // Constructor //////////////////////////////////////////////////////////////
 AAP_Sonar::AAP_Sonar()
@@ -27,7 +27,6 @@ float
 AAP_Sonar::getDistance()
 {
 	raw = analogRead(6);
-	//inches = raw;
-	inches = raw * 5 / 0.0098 / 1024;
-	return inches;
+	cm = raw * 1.26554528; // cm = raw * 5 / 0.0098 / 1024 * 2.54
+	return cm;
 }
