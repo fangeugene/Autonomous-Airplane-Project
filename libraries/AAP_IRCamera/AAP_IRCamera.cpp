@@ -26,7 +26,6 @@ AAP_IRCamera::AAP_IRCamera()
 // Public Methods //////////////////////////////////////////////////////////////
 void IRsensor::init()
 {
-	Serial.begin(38400);
 	I2c.begin();
 	// IR sensor initialize
 	Write_2bytes(0x30,0x01); delay(10);
