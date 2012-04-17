@@ -6,6 +6,8 @@
 
 
 	Methods:
+		init(): initializes registers in IR camera
+		Write_2bytes(): helper function for writing 2 bytes to I2C slave
 		getRawData() : read value from I2C and returns the positions of the
 					   IR sources in the image plane coordinate
 
@@ -16,13 +18,13 @@
 // Constructor //////////////////////////////////////////////////////////////
 AAP_IRCamera::AAP_IRCamera()
 {
+	_IRsensorAddress = 0xB0;
+	_slaveAddress = _IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
 void IRsensor::init()
 {
-	_IRsensorAddress = 0xB0;
-	_slaveAddress = _IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
 	Serial.begin(38400);
 	I2c.begin();
 	// IR sensor initialize
