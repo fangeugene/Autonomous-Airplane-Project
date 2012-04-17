@@ -105,6 +105,14 @@ int linearMapClip(int value, int value_min, int value_max, int mapped_min, int m
   return mapped;
 }
 
+int servoToTiltAngle(int servoAngle) {
+  return -0.001468 * pow(servoAngle, 2.0) + 0.64516 * ((float) servoAngle) + 1.95896;
+}
+
+int tiltToServoAngle(int tiltAngle) {
+  return 0.005404 * pow(tiltAngle, 2.0) + 1.54987 * ((float) tiltAngle) - 3.02604;
+}
+
 void setup(void)
 {
   pinMode(53, OUTPUT);
@@ -156,6 +164,8 @@ void loop(void)
     // 135 + 90    45                  1000            _|                      | clipped region
     // 359         45                  1000                                   _|
     int servoValue = linearMapClip(yaw, 135, 135+90, 2000, 1000);
+    //int tilt = yaw - 150;
+    //int servoValue = linearMapClip(tiltToServoAngle(tilt)+90, 0, 90, 2000, 1000);
     
     Serial.printf("Yaw: %d  Servo 0 Value: %d\n", yaw, servoValue);
     APM_RC.OutputCh(0, servoValue);
