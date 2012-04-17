@@ -12,6 +12,7 @@ void setup()
 void loop()
 {
   Vector2i sources[4];
+  IRCamera.init();
   IRCamera.getRawData(sources);
   Serial.printf("S0: %i %i   S1: %i %i   S2: %i %i   S3: %i %i\n", sources[0].x, sources[0].y,
                                                                    sources[1].x, sources[1].y,
