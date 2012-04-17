@@ -14,6 +14,7 @@
 */
 
 #include "AAP_IRCamera.h"
+#include <I2C.h>
 
 // Constructor //////////////////////////////////////////////////////////////
 AAP_IRCamera::AAP_IRCamera()
