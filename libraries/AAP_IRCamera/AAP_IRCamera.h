@@ -11,7 +11,7 @@ class AAP_IRCamera
 	AAP_IRCamera();
 
 	//Assumes sources is an array of size 4
-	//The IR source is invalid if sources[i].x and sources[i].y are equal to 1023
+	//sources[i] is invalid if both sources[i].x and sources[i].y are equal to 1023
 	void init();
 	void getRawData(Vector2i sources[]);
 
