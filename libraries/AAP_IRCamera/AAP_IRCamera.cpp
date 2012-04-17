@@ -38,14 +38,6 @@ void IRsensor::init()
 	delay(100);
 }
 
-void IRsensor::Write_2bytes(byte d1, byte d2)
-{
-	I2c.beginTransmission(_slaveAddress);
-	I2c.send(d1); I2c.send(d2);
-	I2c.endTransmission();
-}
-
-
 void
 AAP_IRCamera::getRawData(Vector2i sources[])
 {
@@ -82,3 +74,15 @@ AAP_IRCamera::getPosition()
 	position.y = 2;
 	position.z = 3;
 }
+
+
+// Private Methods //////////////////////////////////////////////////////////////
+
+void IRsensor::Write_2bytes(byte d1, byte d2)
+{
+	I2c.beginTransmission(_slaveAddress);
+	I2c.send(d1); I2c.send(d2);
+	I2c.endTransmission();
+}
+
+
