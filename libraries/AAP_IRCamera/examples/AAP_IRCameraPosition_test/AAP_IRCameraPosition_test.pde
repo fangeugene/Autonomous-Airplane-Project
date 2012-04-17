@@ -7,6 +7,7 @@ AAP_IRCamera IRCamera;
 void setup()
 {
   Serial.begin(9600);
+  IRCamera.init();
 }
 
 void loop()
