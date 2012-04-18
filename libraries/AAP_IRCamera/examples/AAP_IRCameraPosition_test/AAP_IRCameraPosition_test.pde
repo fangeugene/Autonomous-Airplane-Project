@@ -2,6 +2,7 @@
 
 #include <FastSerial.h>
 #include <AAP_IRCamera.h>
+#include <I2C.h>
 AAP_IRCamera IRCamera;
 
 void setup()
