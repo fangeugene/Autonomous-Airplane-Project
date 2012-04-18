@@ -24,7 +24,7 @@ AAP_IRCamera::AAP_IRCamera()
 }
 
 // Public Methods //////////////////////////////////////////////////////////////
-void IRsensor::init()
+void AAP_IRCamera::init()
 {
 	I2c.begin();
 	// IR sensor initialize
@@ -77,7 +77,7 @@ AAP_IRCamera::getPosition()
 
 // Private Methods //////////////////////////////////////////////////////////////
 
-void IRsensor::Write_2bytes(byte d1, byte d2)
+void AAP_IRCamera::Write_2bytes(byte d1, byte d2)
 {
 	I2c.beginTransmission(_slaveAddress);
 	I2c.send(d1); I2c.send(d2);
