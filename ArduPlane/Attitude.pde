@@ -116,6 +116,14 @@ static void stabilize()
 	//#if(ROLL_SLEW_LIMIT != 0)
 	//	g.channel_roll.servo_out = roll_slew_limit(g.channel_roll.servo_out);
 	//#endif
+
+        // Throttle control for sonar landing
+        AAP_Sonar sonar;
+        // g.channel_throttle.servo_out ranges from 0 to 255???
+        g.channel_throttle.servo_out = (int)sonar.getDistance() - 50;
+        if (g.channel_throttle.servo_out < 15) {
+          g.channel_throttle.servo_out = 15;
+        }
 }
 
 static void crash_checker()
@@ -148,6 +156,7 @@ static void calc_throttle()
 		}
 
 		g.channel_throttle.servo_out = constrain(g.channel_throttle.servo_out, g.throttle_min.get(), g.throttle_max.get());
+
 	} else {
 		// throttle control with airspeed compensation
 		// -------------------------------------------
