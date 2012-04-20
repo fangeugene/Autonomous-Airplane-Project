@@ -1,0 +1,28 @@
+Demo program that uses the WiiMote and the IR beacon to determine the relative transformation between them.
+by Alex Lee
+
+In order to run the demo, you need to run two programs, which are in the 'WiiControllerTracking' and 'simulation' directories respectively. These programs communicate between each other through UDP sockets.
+
+####################### WiiControllerTracking #######################
+Based from the source code described in here http://idav.ucdavis.edu/~okreylos/ResDev/Wiimote/index.html . Read this webpage and/or the README in this directory for compiling instructions.
+If you want this program to communicate to the other program, you need to modify the IP address defined in Sockets/socketInterfaceSender.h . For this, first connect to the Internet, and then you can find out your IP address by typing the command ifconfig in the terminal. Note that the IP variable is defined with the preprocessor directive #define, so you need to 'make clean' the directory and then 'make' again in order for the IP variable to be updated.
+
+####################### simulation #######################
+__Requirements__
+
+* [Eigen2](http://eigen.tuxfamily.org)
+* [GLUT](http://www.opengl.org/resources/libraries/glut/)
+* ...
+
+On Ubuntu, try running the following commands (you don't need all of them, only a subset... In particular, you don't need openCV libraries):
+ 
+    sudo apt-get update  
+    sudo apt-get install xserver-xorg xserver-xorg-core openbox g++ gcc libeigen2-dev
+        libgle3 libgle3-dev fortran-compiler libglut3 libglut3-dev subversion git-core
+        build-essential libavformat-dev ffmpeg libcv2.1 libcvaux2.1 libhighgui2.1
+        python-opencv opencv-doc libcv-dev libcvaux-dev libhighgui-dev libboost-dev
+        libdevil-dev
+
+  You *may* also need to install gle from source from http://linas.org/gle/. The code will not compile unless you modify the source to #include malloc/malloc.h instead of malloc.h.
+
+ Once all your dependencies are installed, simply run 'make' to build.
