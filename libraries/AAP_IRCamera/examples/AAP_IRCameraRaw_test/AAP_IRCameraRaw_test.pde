@@ -2,11 +2,13 @@
 
 #include <FastSerial.h>
 #include <AAP_IRCamera.h>
+#include <I2C.h>
 AAP_IRCamera IRCamera;
 
 void setup()
 {
   Serial.begin(9600);
+  IRCamera.init();
 }
 
 void loop()
