@@ -45,6 +45,7 @@ version 2.1 of the License, or (at your option) any later version.
 #include <RC_Channel.h>     // RC Channel Library
 #include <AP_RangeFinder.h>	// Range finder library
 #include <AAP_Sonar.h>      // APP Sonar library
+#include <AAP_VelocityController.h>      // APP Velocity Control library
 #include <ModeFilter.h>
 #include <AP_Relay.h>       // APM relay
 #include <AP_Mount.h>		// Camera/Antenna mount

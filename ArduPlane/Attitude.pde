@@ -1,5 +1,6 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-
+AAP_VelocityController aapVC;
+AAP_Sonar aapSonar;
 //****************************************************************
 // Function that controls aileron/rudder, elevator, rudder (if 4 channel control) and throttle to produce desired attitude and airspeed.
 //****************************************************************
@@ -117,13 +118,27 @@ static void stabilize()
 	//	g.channel_roll.servo_out = roll_slew_limit(g.channel_roll.servo_out);
 	//#endif
 
+        
         // Throttle control for sonar landing
-        AAP_Sonar sonar;
+        //AAP_Sonar aapSonar;
         // g.channel_throttle.servo_out ranges from 0 to 255???
-        g.channel_throttle.servo_out = (int)sonar.getDistance() - 50;
+        /*
+        g.channel_throttle.servo_out = (int)aapSonar.getDistance() - 50;
         if (g.channel_throttle.servo_out < 15) {
           g.channel_throttle.servo_out = 15;
         }
+        */
+        
+        
+        
+        // The beginnings of a control algorithm...
+        //AAP_Sonar aapSonar;
+        //AAP_VelocityController aapVC;
+        float altitude = aapSonar.getDistance() - 15;
+        float setpoint = 100; // in centimeters
+        
+        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.001, 0);
+        
 }
 
 static void crash_checker()
