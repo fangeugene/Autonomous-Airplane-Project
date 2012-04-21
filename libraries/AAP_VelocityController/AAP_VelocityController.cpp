@@ -30,8 +30,14 @@ float
 AAP_VelocityController::getOutput(float setpoint, float altitude, float kP, float kD)
 {
 	ret = lastOutput + (setpoint - altitude)*kP - (altitude - lastAltitude)*kD;
+	if (ret > 100) {
+		ret = 100;
+	} else if (ret < 0) {
+		ret = 0;
+	}
+	
 	lastOutput = ret;
 	lastAltitude = altitude;
-	//ret = ret + 1;
+	//ret = ret + 0.1;
 	return ret;
 }

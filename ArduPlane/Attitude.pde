@@ -121,7 +121,7 @@ static void stabilize()
         
         // Throttle control for sonar landing
         //AAP_Sonar aapSonar;
-        // g.channel_throttle.servo_out ranges from 0 to 255???
+        // g.channel_throttle.servo_out ranges from 0 to 100
         /*
         g.channel_throttle.servo_out = (int)aapSonar.getDistance() - 50;
         if (g.channel_throttle.servo_out < 15) {
@@ -137,8 +137,7 @@ static void stabilize()
         float altitude = aapSonar.getDistance() - 15;
         float setpoint = 100; // in centimeters
         
-        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.001, 0);
-        
+        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.007, 0);        
 }
 
 static void crash_checker()
