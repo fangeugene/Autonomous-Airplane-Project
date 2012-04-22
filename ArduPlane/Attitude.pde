@@ -135,9 +135,9 @@ static void stabilize()
         //AAP_Sonar aapSonar;
         //AAP_VelocityController aapVC;
         float altitude = aapSonar.getDistance() - 15;
-        float setpoint = 100; // in centimeters
+        float setpoint = 200; // in centimeters
         
-        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.007, 0);        
+        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.01, 0);       // 0.007
 }
 
 static void crash_checker()
