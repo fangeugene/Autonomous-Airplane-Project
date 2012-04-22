@@ -145,25 +145,26 @@ static void stabilize()
         float altitude = aapSonar.getDistance() - 15;
         float setpoint = 200; // in centimeters
         
-        if (altitude > 625) {  // 645cm is around the max distance the sonar sensor can report
-          // the plane is actually above 625cm or it is an angle at which the sonar sensor cannot detect the ground
+        if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
+          // the plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
           // slowly decrease the motor output, limited between 50% and 100%
-          // plane will either lower itself under 625cm or have time to become level so that the sonar sensor can detect the ground
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(624, 625, 0.01, 0.00, 50, 100);
+          // plane will either lower itself under 620cm or have time to become level so that the sonar sensor can detect the ground
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 50, 100);
+          
           // TODO: change this implementation to use gyro to tell if plane is level or not
         } else {
-          // Control throttle, limited betweeen 50% and 100%
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 50, 100);
+          // Control throttle, limited betweeen 75% and 100%
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
           
-          // If trying to climb, also use elevator
+          // Also use elevator
           float pitchCorrection = (setpoint - altitude) * 10;
           // channel_pitch.servo_out can range from +/- 2500
           
           // Limit pitchCorrection
-          if (pitchCorrection > 1500) {
+          if (pitchCorrection > 1500) {      // Be more agressive when climbing
             pitchCorrection = 1500;
-          } else if (pitchCorrection < 0) {
-            pitchCorrection = 0;
+          } else if (pitchCorrection < -500) {  // Be less agressive when diving
+            pitchCorrection = -500;
           }
           
           g.channel_pitch.servo_out += pitchCorrection;
