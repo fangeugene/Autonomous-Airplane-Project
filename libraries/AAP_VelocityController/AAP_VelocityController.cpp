@@ -6,8 +6,8 @@
 
 
 	Methods:
-		getOutput(float setpoint, float altitude, float kP, float kD) : return motor output as a float
-
+		getOutput(float setpoint, float altitude, float kP, float kD, float lowerBound, float upperBound) : return motor output as a float
+		lastOutput() : returns last output as a float
 */
 
 #include "AAP_VelocityController.h"
@@ -27,13 +27,13 @@ AAP_VelocityController::AAP_VelocityController()
 }
 // Public Methods //////////////////////////////////////////////////////////////
 float
-AAP_VelocityController::getOutput(float setpoint, float altitude, float kP, float kD)
+AAP_VelocityController::getOutput(float setpoint, float altitude, float kP, float kD, float lowerBound, float upperBound)
 {
 	ret = lastOutput + (setpoint - altitude)*kP - (altitude - lastAltitude)*kD;
-	if (ret > 100) {
-		ret = 100;
-	} else if (ret < 0) {
-		ret = 0;
+	if (ret > upperBound) {
+		ret = upperBound;
+	} else if (ret < lowerBound) {
+		ret = lowerBound;
 	}
 	
 	lastOutput = ret;
@@ -41,3 +41,9 @@ AAP_VelocityController::getOutput(float setpoint, float altitude, float kP, floa
 	//ret = ret + 0.1;
 	return ret;
 }
+/*
+float
+AAP_VelocityController::lastOutput()
+{
+	return lastOutput;
+}*/

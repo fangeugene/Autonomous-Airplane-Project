@@ -130,14 +130,44 @@ static void stabilize()
         */
         
         
-        
-        // The beginnings of a control algorithm...
+        /*
+        // The beginnings of a control algorithm for maintining altitude...
         //AAP_Sonar aapSonar;
         //AAP_VelocityController aapVC;
         float altitude = aapSonar.getDistance() - 15;
         float setpoint = 200; // in centimeters
         
         g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.01, 0);       // 0.007
+        
+        */
+        
+        // Altitude maintaining control rev 2...
+        float altitude = aapSonar.getDistance() - 15;
+        float setpoint = 200; // in centimeters
+        
+        if (altitude > 625) {  // 645cm is around the max distance the sonar sensor can report
+          // the plane is actually above 625cm or it is an angle at which the sonar sensor cannot detect the ground
+          // slowly decrease the motor output, limited between 50% and 100%
+          // plane will either lower itself under 625cm or have time to become level so that the sonar sensor can detect the ground
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(624, 625, 0.01, 0.00, 50, 100);
+          // TODO: change this implementation to use gyro to tell if plane is level or not
+        } else {
+          // Control throttle, limited betweeen 50% and 100%
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 50, 100);
+          
+          // If trying to climb, also use elevator
+          float pitchCorrection = (setpoint - altitude) * 10;
+          // channel_pitch.servo_out can range from +/- 2500
+          
+          // Limit pitchCorrection
+          if (pitchCorrection > 1500) {
+            pitchCorrection = 1500;
+          } else if (pitchCorrection < 0) {
+            pitchCorrection = 0;
+          }
+          
+          g.channel_pitch.servo_out += pitchCorrection;
+        }
 }
 
 static void crash_checker()

@@ -5,6 +5,7 @@ class AAP_VelocityController
 {
   public:
 	AAP_VelocityController();
-	float getOutput(float setpoint, float altitude, float kP, float kD);	
+	float getOutput(float setpoint, float altitude, float kP, float kD, float lowerBound, float upperBound);
+	//float lastOutput();
 };
 #endif
