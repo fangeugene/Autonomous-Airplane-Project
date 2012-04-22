@@ -271,7 +271,6 @@ Vector3f AAP_IRCamera::getPosition() {
 		//std::cout<<"\r"<<useconds<<"\t"<<wiipos<<std::flush;
 		
 		//TODO return this properly
-		/*
 		sendDeviceState(wiipos.getOrigin()[0],
                     wiipos.getOrigin()[1],
 		                wiipos.getOrigin()[2],
@@ -284,8 +283,6 @@ Vector3f AAP_IRCamera::getPosition() {
 		                wiipos.getDirection(2)[0],
 		                wiipos.getDirection(2)[1],
 		                wiipos.getDirection(2)[2]);
-		                */
-		return Vector3f(wiipos.getOrigin()[0],wiipos.getOrigin()[1],wiipos.getOrigin()[2]);
 }
 
 
