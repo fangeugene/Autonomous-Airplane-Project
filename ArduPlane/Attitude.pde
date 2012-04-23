@@ -82,12 +82,12 @@ static void stabilize()
 		// scale the sensor input based on the stick input
 		// -----------------------------------------------
 		g.channel_roll.servo_out *= ch1_inf;
-		g.channel_pitch.servo_out *= ch2_inf;
+		//g.channel_pitch.servo_out *= ch2_inf;
 
 		// Mix in stick inputs
 		// -------------------
 		g.channel_roll.servo_out +=	g.channel_roll.pwm_to_angle();
-		g.channel_pitch.servo_out +=	g.channel_pitch.pwm_to_angle();
+		//g.channel_pitch.servo_out +=	g.channel_pitch.pwm_to_angle();
 
 		//Serial.printf_P(PSTR(" servo_out[CH_ROLL] "));
 		//Serial.println(servo_out[CH_ROLL],DEC);
@@ -161,8 +161,8 @@ static void stabilize()
           // channel_pitch.servo_out can range from +/- 2500
           
           // Limit pitchCorrection
-          if (pitchCorrection > 750) {      // Be more agressive when climbing
-            pitchCorrection = 750;
+          if (pitchCorrection > 1000) {      // Be more agressive when climbing
+            pitchCorrection = 1000;
           } else if (pitchCorrection < -250) {  // Be less agressive when diving
             pitchCorrection = -250;
           }
