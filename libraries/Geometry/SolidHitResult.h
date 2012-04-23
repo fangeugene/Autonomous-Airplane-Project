@@ -24,7 +24,7 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_SOLIDHITRESULT_INCLUDED
 #define GEOMETRY_SOLIDHITRESULT_INCLUDED
 
-#include <Geometry/HitResult.h>
+#include <../Geometry/HitResult.h>
 
 namespace Geometry {
 

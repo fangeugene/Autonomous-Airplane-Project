@@ -23,7 +23,7 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_MATRIXHELPERFUNCTIONS_INCLUDED
 #define GEOMETRY_MATRIXHELPERFUNCTIONS_INCLUDED
 
-#include <Misc/Utility.h>
+#include <../Misc/Utility.h>
 
 /*******************************************
 Calculate subdeterminants of a 3 x m matrix:

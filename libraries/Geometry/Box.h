@@ -24,11 +24,11 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #define GEOMETRY_BOX_INCLUDED
 
 #include <utility>
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Point.h>
-#include <Geometry/Vector.h>
-#include <Geometry/Ray.h>
-#include <Geometry/SolidHitResult.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Point.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Ray.h>
+#include <../Geometry/SolidHitResult.h>
 
 namespace Geometry {
 

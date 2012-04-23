@@ -1,4 +1,4 @@
-#ifndef AAP_IRCamera_h
+	#ifndef AAP_IRCamera_h
 #define AAP_IRCamera_h
 #define byte uint8_t
 #include <inttypes.h>

@@ -24,8 +24,8 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_AFFINECOMBINER_INCLUDED
 #define GEOMETRY_AFFINECOMBINER_INCLUDED
 
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Point.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Point.h>
 
 namespace Geometry {
 

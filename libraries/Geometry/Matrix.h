@@ -24,10 +24,10 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_MATRIX_INCLUDED
 #define GEOMETRY_MATRIX_INCLUDED
 
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Vector.h>
-#include <Geometry/Point.h>
-#include <Geometry/HVector.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Point.h>
+#include <../Geometry/HVector.h>
 
 namespace Geometry {
 

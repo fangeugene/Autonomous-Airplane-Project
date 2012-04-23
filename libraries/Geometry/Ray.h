@@ -23,8 +23,8 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_RAY_INCLUDED
 #define GEOMETRY_RAY_INCLUDED
 
-#include <Geometry/Vector.h>
-#include <Geometry/Point.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Point.h>
 
 namespace Geometry {
 

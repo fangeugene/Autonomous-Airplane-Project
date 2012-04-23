@@ -24,7 +24,7 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_COMPONENTARRAY_INCLUDED
 #define GEOMETRY_COMPONENTARRAY_INCLUDED
 
-#include <Math/Math.h>
+#include <../Math/Math.h>
 
 namespace Geometry {
 

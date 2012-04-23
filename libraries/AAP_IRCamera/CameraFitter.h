@@ -25,12 +25,12 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef CAMERAFITTER_INCLUDED
 #define CAMERAFITTER_INCLUDED
 
-#include <Math/Math.h>
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Point.h>
-#include <Geometry/Vector.h>
-#include <Geometry/Rotation.h>
-#include <Geometry/OrthonormalTransformation.h>
+#include <../Math/Math.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Point.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Rotation.h>
+#include <../Geometry/OrthonormalTransformation.h>
 
 class CameraFitter
 	{

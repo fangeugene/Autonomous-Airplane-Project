@@ -25,7 +25,7 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_HITRESULT_INCLUDED
 #define GEOMETRY_HITRESULT_INCLUDED
 
-#include <Math/Constants.h>
+#include <../Math/Constants.h>
 
 namespace Geometry {
 

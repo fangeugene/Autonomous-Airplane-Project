@@ -23,9 +23,9 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_POINT_INCLUDED
 #define GEOMETRY_POINT_INCLUDED
 
-#include <Math/Math.h>
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Vector.h>
+#include <../Math/Math.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Vector.h>
 
 namespace Geometry {
 

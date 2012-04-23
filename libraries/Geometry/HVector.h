@@ -23,10 +23,10 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_HVECTOR_INCLUDED
 #define GEOMETRY_HVECTOR_INCLUDED
 
-#include <Math/Math.h>
-#include <Geometry/ComponentArray.h>
-#include <Geometry/Vector.h>
-#include <Geometry/Point.h>
+#include <../Math/Math.h>
+#include <../Geometry/ComponentArray.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Point.h>
 
 namespace Geometry {
 

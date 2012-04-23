@@ -23,9 +23,9 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_TRANSLATIONTRANSFORMATION_INCLUDED
 #define GEOMETRY_TRANSLATIONTRANSFORMATION_INCLUDED
 
-#include <Geometry/Vector.h>
-#include <Geometry/Point.h>
-#include <Geometry/HVector.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Point.h>
+#include <../Geometry/HVector.h>
 
 namespace Geometry {
 

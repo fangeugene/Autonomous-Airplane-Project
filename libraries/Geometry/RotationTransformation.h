@@ -23,10 +23,10 @@ Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
 #ifndef GEOMETRY_ROTATIONTRANSFORMATION_INCLUDED
 #define GEOMETRY_ROTATIONTRANSFORMATION_INCLUDED
 
-#include <Geometry/Vector.h>
-#include <Geometry/Point.h>
-#include <Geometry/HVector.h>
-#include <Geometry/Rotation.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/Point.h>
+#include <../Geometry/HVector.h>
+#include <../Geometry/Rotation.h>
 
 namespace Geometry {
 

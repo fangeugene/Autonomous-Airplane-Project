@@ -16,11 +16,11 @@
 #include "AAP_IRCamera.h"
 #include "CameraFitter.h"
 #include <I2C.h>
-#include <Geometry/Point.h>
-#include <Geometry/Vector.h>
-#include <Geometry/AffineCombiner.h>
-#include <Geometry/OrthonormalTransformation.h>
-#include <AP_DCM.h>         // ArduPilot Mega DCM Library
+#include <../Geometry/Point.h>
+#include <../Geometry/Vector.h>
+#include <../Geometry/AffineCombiner.h>
+#include <../Geometry/OrthonormalTransformation.h>
+#include <../AP_DCM/AP_DCM.h>         // ArduPilot Mega DCM Library
 
 /* Type declarations: */
 typedef CameraFitter::Scalar Scalar; // Scalar type for points and vectors
