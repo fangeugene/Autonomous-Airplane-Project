@@ -42,8 +42,6 @@ AP_DCM dcm(&imu, g_gps);
 // Constructor //////////////////////////////////////////////////////////////
 AAP_IRCamera::AAP_IRCamera()
 {
-	_IRsensorAddress = 0xB0;
-	_slaveAddress = _IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
 	
 	/* Create a camera fitter object for IR tracking: */
 	Pixel ccdCenter=Pixel(512,384);
@@ -92,6 +90,10 @@ AAP_IRCamera::AAP_IRCamera()
 // Public Methods //////////////////////////////////////////////////////////////
 void AAP_IRCamera::init()
 {
+	_IRsensorAddress = 0xB0;
+	_slaveAddress = _IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
+	
+	
 	I2c.begin();
 	// IR sensor initialize
 	Write_2bytes(0x30,0x01); delay(10);
@@ -109,7 +111,7 @@ void AAP_IRCamera::init()
 	
 }
 
-void AAP_IRCamera::getRawData()
+Vector2i AAP_IRCamera::getRawData()
 {
 	Vector2i sources[];
 	I2c.beginTransmission(_slaveAddress);
