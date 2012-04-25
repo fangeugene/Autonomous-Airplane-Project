@@ -126,9 +126,9 @@ public:
 
 	Vector3<T> row(int i)
 	{
-		if (int i == 0)
+		if (i == 0)
 			return a;
-		else if (int i == 1)
+		else if (i == 1)
 			return b;
 		else
 			return c;
@@ -136,9 +136,9 @@ public:
 
 	const Vector3<T> row(int i) const
 	{
-		if (int i == 0)
+		if (i == 0)
 			return a;
-		else if (int i == 1)
+		else if (i == 1)
 			return b;
 		else
 			return c;
@@ -146,9 +146,9 @@ public:
 
 	Vector3<T> col(int i)
 	{
-		if (int i == 0)
+		if (i == 0)
 			return Vector3<T>(a.x, b.x, c.x);
-		else if (int i == 1)
+		else if (i == 1)
 			return Vector3<T>(a.y, b.y, c.y);
 		else
 			return Vector3<T>(a.z, b.z, c.z);
@@ -156,9 +156,9 @@ public:
 
 	const Vector3<T> col(int i) const
 	{
-		if (int i == 0)
+		if (i == 0)
 			return Vector3<T>(a.x, b.x, c.x);
-		else if (int i == 1)
+		else if (i == 1)
 			return Vector3<T>(a.y, b.y, c.y);
 		else
 			return Vector3<T>(a.z, b.z, c.z);
