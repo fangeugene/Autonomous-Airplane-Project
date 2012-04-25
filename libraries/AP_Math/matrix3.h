@@ -124,6 +124,46 @@ public:
 	Matrix3<T> transpose(void)
 	{	return *this = transposed();	}
 
+	Vector3<T> row(int i)
+	{
+		if (int i == 0)
+			return a;
+		else if (int i == 1)
+			return b;
+		else
+			return c;
+	}
+
+	const Vector3<T> row(int i) const
+	{
+		if (int i == 0)
+			return a;
+		else if (int i == 1)
+			return b;
+		else
+			return c;
+	}
+
+	Vector3<T> col(int i)
+	{
+		if (int i == 0)
+			return Vector3<T>(a.x, b.x, c.x);
+		else if (int i == 1)
+			return Vector3<T>(a.y, b.y, c.y);
+		else
+			return Vector3<T>(a.z, b.z, c.z);
+	}
+
+	const Vector3<T> col(int i) const
+	{
+		if (int i == 0)
+			return Vector3<T>(a.x, b.x, c.x);
+		else if (int i == 1)
+			return Vector3<T>(a.y, b.y, c.y);
+		else
+			return Vector3<T>(a.z, b.z, c.z);
+	}
+
 };
 
 typedef Matrix3<int16_t>		Matrix3i;
