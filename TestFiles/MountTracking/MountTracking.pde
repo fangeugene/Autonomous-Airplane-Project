@@ -126,10 +126,18 @@ void printMatrix(Matrix3<T> m)
 }
 
 void trackingAngles(Vector3f track, float &pan, float &tilt) {
-  Vector3f n_plane1(0.0, 0.0, 1.0);
-  Vector3f track_onto_plane1 = track - track.projected(n_plane1);
-  pan = ToDeg(track_onto_plane1.angle(track_onto_plane1, Vector3f(0.0, 1.0, 0.0)));
-  tilt = ToDeg(track.angle(track, track_onto_plane1)) - 45.0;
+  Vector3f n_plane(0.0, 0.0, 1.0);
+  Vector3f track_onto_plane = track - track.projected(n_plane);
+  if (track_onto_plane.length_squared() > 0.1)
+    pan = ToDeg(track_onto_plane.angle(track_onto_plane, Vector3f(0.0, 1.0, 0.0)));
+  if (pan > 90) {
+    pan -= 180;
+    track_onto_plane *= -1;
+  } else if (pan < 90) {
+    pan += 180;
+    track_onto_plane *= -1;
+  }
+  tilt = ToDeg(track.angle(track, track_onto_plane)) - 45.0;
 }
 
 void setup(void)
@@ -177,18 +185,19 @@ void loop(void)
     int yaw = (uint16_t)dcm.yaw_sensor / 100;
     int pitch = (int)dcm.pitch_sensor / 100;
     int roll = (int)dcm.roll_sensor / 100;
+    Serial.printf("Yaw %d   Pitch %d   Roll %d\n", yaw, pitch, roll);
     
-    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(1.0, 0.0, 0.0))
-                        * Matrix3f(ToRad(pitch), Vector3f(0.0, 1.0, 0.0))
-                        * Matrix3f(ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
-    //rotation =  Matrix3f(ToRad(-90), Vector3f(0.0, 0.0, 1.0)) * Matrix3f(ToRad(180), Vector3f(1.0, 0.0, 0.0)) * rotation;
+    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
+                        * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
+                        * Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
+    // Standard convention for yaw, pitch, roll gives the follwing coodinates:
     // x axis - front
     // y axis - 90 degrees clockwise from x axis when looking from up
     // z axis - down
     printMatrix(rotation);
     
     float pan, tilt;
-    trackingAngles(rotation.col(0), pan, tilt);
+    trackingAngles(rotation.col(1), pan, tilt);
     
     int panServo  = panAngleToPW(int(pan));
     int tiltServo = tiltAngleToPW(int(tilt));
