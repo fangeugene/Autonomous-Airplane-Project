@@ -51,6 +51,16 @@ public:
 	// setting ctor
 	Matrix3<T>(const T ax, const T ay, const T az, const T bx, const T by, const T bz, const T cx, const T cy, const T cz): a(ax,ay,az), b(bx,by,bz), c(cx,cy,cz) {}
 
+	// constructor from angle and axis
+	Matrix3<T>(const float t, const Vector3<T> u)
+	{
+		float ct = cos(t);
+		float st = sin(t);
+		a(ct+u.x*u.x*(1-ct),		u.x*u.y*(1-ct)-u.z*st,	u.x*u.z*(1-ct)+u.y*st);
+		b(u.y*u.x*(1-ct)+u.z*st,	ct+u.y*u.y*(1-ct),		u.y*u.z*(1-ct)-u.x*st);
+		c(u.z*u.x*(1-ct)-u.y*st,	u.z*u.y*(1-ct)+u.x*st,	ct+u.z*u.z*(1-ct));
+	}
+
 	// function call operator
 	void operator () (const Vector3<T> a0, const Vector3<T> b0, const Vector3<T> c0)
 	{	a = a0; b = b0; c = c0;  }
