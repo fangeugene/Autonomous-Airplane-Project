@@ -18,6 +18,12 @@
 #include <APM_RC.h> // ArduPilot Mega RC Library
 APM_RC_APM1 APM_RC;
 
+#include <AP_Math.h>
+#include <matrix3.h>
+#include <polygon.h>
+#include <vector2.h>
+#include <vector3.h>
+
 // Configuration
 #include "config.h"
 
@@ -105,6 +111,35 @@ int tiltToServoAngle(int tiltAngle) {
 }
 */
 
+template <typename T>
+void printVector(Vector3<T> v)
+{
+  Serial.printf("%4.2f  %4.2f  %4.2f\n", v.x, v.y, v.z);
+}
+
+template <typename T>
+void printMatrix(Matrix3<T> m)
+{
+  printVector(m.a);
+  printVector(m.b);
+  printVector(m.c);
+}
+
+void trackingAngles(Vector3f track, float &pan, float &tilt) {
+  Vector3f n_plane(0.0, 0.0, 1.0);
+  Vector3f track_onto_plane = track - track.projected(n_plane);
+  if (track_onto_plane.length_squared() > 0.1)
+    pan = ToDeg(track_onto_plane.angle(track_onto_plane, Vector3f(0.0, 1.0, 0.0)));
+  if (pan > 90) {
+    pan -= 180;
+    track_onto_plane *= -1;
+  } else if (pan < 90) {
+    pan += 180;
+    track_onto_plane *= -1;
+  }
+  tilt = ToDeg(track.angle(track, track_onto_plane)) - 45.0;
+}
+
 void setup(void)
 {
   pinMode(53, OUTPUT);
@@ -150,12 +185,26 @@ void loop(void)
     int yaw = (uint16_t)dcm.yaw_sensor / 100;
     int pitch = (int)dcm.pitch_sensor / 100;
     int roll = (int)dcm.roll_sensor / 100;
-    int yawServo   = panAngleToPW(yaw-180);
-    int pitchServo = tiltAngleToPW(-pitch);
+    Serial.printf("Yaw %d   Pitch %d   Roll %d\n", yaw, pitch, roll);
     
-    Serial.printf("Yaw:   %d  Servo 0 Value: %d\n", yaw,   yawServo);
-    Serial.printf("Pitch: %d  Servo 1 Value: %d\n", pitch, pitchServo);
-    APM_RC.OutputCh(0, yawServo);
-    APM_RC.OutputCh(1, pitchServo);
+    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
+                        * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
+                        * Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
+    // Standard convention for yaw, pitch, roll gives the follwing coodinates:
+    // x axis - front
+    // y axis - 90 degrees clockwise from x axis when looking from up
+    // z axis - down
+    printMatrix(rotation);
+    
+    float pan, tilt;
+    trackingAngles(rotation.col(1), pan, tilt);
+    
+    int panServo  = panAngleToPW(int(pan));
+    int tiltServo = tiltAngleToPW(int(tilt));
+    
+    Serial.printf("Pan:   %4.2f  Servo 0 Value: %d\n", pan,  panServo);
+    Serial.printf("Tilt:  %4.2f  Servo 1 Value: %d\n", tilt, tiltServo);
+    APM_RC.OutputCh(0, panServo);
+    APM_RC.OutputCh(1, tiltServo);
   }
 }
