@@ -11,6 +11,7 @@
 
 #include "drawUtils.h"
 #include "mathUtils.h"
+#include "Mouse.h"
 #include "Box.h"
 #include "Plane.h"
 
@@ -45,7 +46,7 @@ float lasty_M=0;
 
 int pressed_mouse_button;
 float rotate_frame[2] = { 0.0, -90.0 };
-float translate_frame[3] = { 0.0, 0.0, -110.0 };
+float translate_frame[3] = { 0.0, 0.0, -110.0+20.0 };
 
 double fovy = 61.93;
 double z_near = 50.0;
@@ -56,7 +57,10 @@ GLdouble projection[16];
 GLint viewport[4];
 int window_width, window_height;
 
-Box* wiiMote;
+Mouse *mouse0, *mouse1;
+Box *servo0, *servo1;
+float pan = 0.0, tilt = 0.0;
+Box *wiiMote;
 Plane* ground;
 double wiiMote_length_x = 3.5;
 double wiiMote_length_y = 15.0;
@@ -67,8 +71,11 @@ vector<Vector3d> traj_positions;
 
 void processLeft(int x, int y)
 {
-	if (/*glutGetModifiers()*/ false &  GLUT_ACTIVE_CTRL){
-
+	if (mouse0->getKeyPressed() != NONE) {
+		mouse0->add2DMove(x-lastx_L, lasty_L-y);
+	} else if (mouse1->getKeyPressed() != NONE) {
+		mouse1->add2DMove(x-lastx_L, lasty_L-y);
+	} else if (/*glutGetModifiers()*/ false &  GLUT_ACTIVE_CTRL){
 		translate_frame[0] += 0.1*(x-lastx_L);
 		translate_frame[1] += 0.1*(lasty_L-y);
 	} else {
@@ -94,6 +101,8 @@ void mouseMotion (int x, int y)
   } else if (pressed_mouse_button == GLUT_MIDDLE_BUTTON) {
     processMiddle(x,y);
   }
+  mouse0->applyTransformFrom2DMove(model_view, projection, viewport);
+	mouse1->applyTransformFrom2DMove(model_view, projection, viewport);
 	glutPostRedisplay ();
 }
 
@@ -114,7 +123,27 @@ void processMouse(int button, int state, int x, int y)
 
 void processNormalKeys(unsigned char key, int x, int y)
 {
-  if (key == 'd') {
+  if (key == 't')
+	  mouse0->setKeyPressed(MOVETAN);
+  else if (key == 'm')
+    mouse0->setKeyPressed(MOVEPOS);
+  else if (key == 'r')
+    mouse0->setKeyPressed(ROTATETAN);
+  else if (key == 'T')
+	  mouse1->setKeyPressed(MOVETAN);
+  else if (key == 'M')
+    mouse1->setKeyPressed(MOVEPOS);
+  else if (key == 'R')
+    mouse1->setKeyPressed(ROTATETAN);
+  else if (key == '=')
+    pan += 1.0;
+  else if (key == '-')
+    pan -= 1.0;
+  else if (key == '+')
+    tilt += 1.0;
+  else if (key == '_')
+    tilt -= 1.0;
+  else if (key == 'd') {
     draw_traj = !draw_traj;
     if (!draw_traj) {
       traj_positions.clear();
@@ -127,6 +156,10 @@ void processNormalKeys(unsigned char key, int x, int y)
 
 void processKeyUp(unsigned char key, int x, int y)
 {
+  mouse0->setKeyPressed(NONE);
+  mouse1->setKeyPressed(NONE);
+  mouse0->add2DMove(0.0, 0.0);
+  mouse1->add2DMove(0.0, 0.0);
 }
 
 void processSpecialKeys(int key, int x, int y) {
@@ -171,6 +204,52 @@ void reshape (int w, int h)
    window_height = viewport[3];
 }
 
+/*void trackingAngles(Vector3f track, float &pan, float &tilt) {
+  Vector3f n_plane(0.0, 0.0, 1.0);
+  Vector3f track_onto_plane = track - track.projected(n_plane);
+  if (track_onto_plane.length_squared() > 0.1)
+    pan = ToDeg(track_onto_plane.angle(track_onto_plane, Vector3f(0.0, 1.0, 0.0)));
+  if (pan > 90) {
+    pan -= 180;
+    track_onto_plane *= -1;
+  } else if (pan < 90) {
+    pan += 180;
+    track_onto_plane *= -1;
+  }
+  tilt = ToDeg(track.angle(track, track_onto_plane)) - 45.0;
+}*/
+
+double angle(const Vector3d &Va, const Vector3d &Vb, const Vector3d &Vn) {
+  double sina = (Va.cross(Vb)).norm();
+  double cosa = Va.dot(Vb);
+  double angle = atan2( sina, cosa );
+  if (Vn.dot(Va.cross(Vb)) < 0)
+    angle *= -1;
+  return angle;
+}
+
+void trackingAngles(const Vector3d& track, const Vector3d &zero_pan_axis, const Vector3d &pan_axis, float &pan, float &tilt) {
+  // Projection of track onto the plane with normal zero_pan_axis
+  Vector3d track_onto_plane = track - track.dot(pan_axis) * pan_axis;
+  float backup_pan = pan;
+  pan = angle(zero_pan_axis, track_onto_plane, pan_axis) * 180.0/M_PI;
+  if (pan > 90)
+    pan -= 180;
+  else if (pan < -90)
+    pan += 180;
+  Vector3d tilt_axis = zero_pan_axis.cross(pan_axis);
+  // tilt_axis gets rotated by the pan
+  tilt_axis = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, pan_axis)) * tilt_axis;
+  glColor3f(0.0, 0.5, 0.5);
+  drawArrow(servo1->position, 20.0*tilt_axis);
+  tilt = angle(track_onto_plane, track, tilt_axis) * 180.0/M_PI - 90.0;
+  if (tilt < -90)
+    tilt += 180;
+  // Prevents rapid change of pan at the singularities of tilt near zero
+  if (tilt > -10 && tilt < 10)
+    pan = backup_pan;
+}
+
 void drawStuff()
 {
 	glPushMatrix ();
@@ -193,15 +272,46 @@ void drawStuff()
 	glLightfv (GL_LIGHT2, GL_POSITION, lightThreePosition);
 	glLightfv (GL_LIGHT3, GL_POSITION, lightFourPosition);
 	
+	ground->draw();
+	drawAxes(Vector3d::Zero(), Matrix3d::Identity());
+  labelAxes(Vector3d::Zero(), Matrix3d::Identity());
+	
+	//drawAxes(mouse0->getPosition(), mouse0->getRotation());
+	//drawAxes(mouse1->getPosition(), mouse1->getRotation());
+  
+  servo0->setTransform(mouse1->getPosition(), mouse1->getRotation());
+  
+  Vector3d track = mouse0->getRotation().col(0);
+  Vector3d zero_pan_axis = servo0->rotation.col(1);
+  Vector3d pan_axis = servo0->rotation.col(2);
+  glColor3f(1.0,0.0,0.0);
+  drawArrow(servo1->position, 20.0*track);
+  glColor3f(0.0,1.0,0.0);
+  drawArrow(servo0->position, 20.0*zero_pan_axis);
+  glColor3f(0.0,0.0,1.0);
+  drawArrow(servo0->position, 20.0*pan_axis);
+  trackingAngles(track, zero_pan_axis, pan_axis, pan, tilt);
+
+  cout << pan << "\t\t" << tilt << endl;
+  
+  if (pan > 45) pan = 45;
+  else if (pan < -45) pan = -45;
+  if (tilt > 60) tilt = 60;
+  else if (tilt < -60) tilt = -60;
+  
+  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, pan_axis)) * servo0->rotation;
+  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(tilt*M_PI/180.0, servo1->rotation.col(0))) * servo1->rotation;
+  servo1->setTransform(servo0->position+2.0*1.75*servo0->rotation.col(2), servo1->rotation);
+
+  servo0->draw();
+  drawAxes(servo0->position, servo0->rotation);
+  servo1->draw();
+  drawAxes(servo1->position, servo1->rotation);
+	
 	Vector3d t_pos;
 	Matrix3d t_rot;
 	vector<Vector2d> ir_pos;
 	getDeviceState(t_pos, t_rot, ir_pos);
-	
-	ground->draw();
-	
-	drawAxes(Vector3d::Zero(), Matrix3d::Identity());
-  labelAxes(Vector3d::Zero(), Matrix3d::Identity());
   
   //compute sonar_distance
   /*
@@ -348,6 +458,9 @@ int main (int argc, char * argv[])
 	glutAttachMenu (GLUT_RIGHT_BUTTON);
 	
 	initGL();
+	
+	mouse0 = new Mouse(Vector3d::Zero(), Matrix3d::Identity());
+	mouse1 = new Mouse(Vector3d::Zero(), Matrix3d::Identity());
 
 	glGetDoublev(GL_MODELVIEW_MATRIX, model_view);
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -356,6 +469,8 @@ int main (int argc, char * argv[])
   receiverInit();
 
   wiiMote = new Box(Vector3d(0.0,-30.0-wiiMote_length_y/2.0,0.0), Matrix3d::Identity(), Vector3d(wiiMote_length_x/2.0, wiiMote_length_y/2.0, wiiMote_length_z/2.0), 0.0, 0.5, 0.5);
+  servo0 = new Box(Vector3d(0.0, 0.0, 5.0), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.2, 0.8);
+  servo1 = new Box(Vector3d(0.0, 0.0, 5.0), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.8, 0.2);
   ground = new Plane(Vector3d(0.0, 0.0, 0.0), (Matrix3d) Eigen::AngleAxisd(M_PI/2.0, -Vector3d::UnitY()), 5*8);
 
   glutMainLoop ();

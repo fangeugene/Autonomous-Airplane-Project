@@ -125,19 +125,34 @@ void printMatrix(Matrix3<T> m)
   printVector(m.c);
 }
 
-void trackingAngles(Vector3f track, float &pan, float &tilt) {
-  Vector3f n_plane(0.0, 0.0, 1.0);
-  Vector3f track_onto_plane = track - track.projected(n_plane);
-  if (track_onto_plane.length_squared() > 0.1)
-    pan = ToDeg(track_onto_plane.angle(track_onto_plane, Vector3f(0.0, 1.0, 0.0)));
-  if (pan > 90) {
-    pan -= 180;
-    track_onto_plane *= -1;
-  } else if (pan < 90) {
-    pan += 180;
-    track_onto_plane *= -1;
-  }
-  tilt = ToDeg(track.angle(track, track_onto_plane)) - 45.0;
+float angle(const Vector3f &Va, const Vector3f &Vb, const Vector3f &Vn)
+{
+  float sina = (Va%Vb).length();
+  float cosa = Va*Vb;
+  float angle = atan2( sina, cosa );
+  if (Vn*(Va%Vb) < 0.0)
+	angle *= -1.0;
+  return angle;
+}
+
+void trackingAngles(const Vector3f& track, const Vector3f &zero_pan_axis, const Vector3f &pan_axis, float &pan, float &tilt) {
+  // Projection of track onto the plane with normal zero_pan_axis
+  Vector3f track_onto_plane = track - (track*pan_axis) * pan_axis;
+  float backup_pan = pan;
+  pan = ToDeg(angle(zero_pan_axis, track_onto_plane, pan_axis));
+  if (pan > 90.0)
+    pan -= 180.0;
+  else if (pan < -90.0)
+    pan += 180.0;
+  Vector3d tilt_axis = zero_pan_axis%pan_axis;
+  // tilt_axis gets rotated by the pan
+  tilt_axis = Matrix3f(ToRad(pan), pan_axis) * tilt_axis;
+  tilt = ToDeg(angle(track_onto_plane, track, tilt_axis)) - 90.0;
+  if (tilt < -90.0)
+    tilt += 180.0;
+  // Prevents rapid change of pan at the singularities of tilt near zero
+  if (tilt > -10.0 && tilt < 10.0)
+    pan = backup_pan;
 }
 
 void setup(void)
@@ -197,7 +212,10 @@ void loop(void)
     printMatrix(rotation);
     
     float pan, tilt;
-    trackingAngles(rotation.col(1), pan, tilt);
+    Vector3f track = rotation.col(1);
+    Vector3f zero_pan_axis(0.0, 1.0, 0.0);
+    Vector3f pan_axis(0.0, 0.0, 1.0);
+    trackingAngles(track, zero_pan_axis, pan_axis, pan, tilt);
     
     int panServo  = panAngleToPW(int(pan));
     int tiltServo = tiltAngleToPW(int(tilt));

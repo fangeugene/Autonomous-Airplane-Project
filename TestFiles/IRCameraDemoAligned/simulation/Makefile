@@ -18,8 +18,8 @@ NDEBUG = #-DNDEBUG
 
 target: IRCameraDemo
 
-IRCameraDemo: IRCameraDemo.cpp mathUtils.o drawUtils.o imageloader.o Box.o Plane.o socketInterfaceReceiver.o UDPSocket.o Socket.o
-	$(LD) $(INCLUDES) $(DEBUG) $(NDEBUG) -o IRCameraDemo IRCameraDemo.cpp mathUtils.o drawUtils.o imageloader.o Box.o Plane.o socketInterfaceReceiver.o UDPSocket.o Socket.o $(LIBS) $(PROFILER)
+IRCameraDemo: IRCameraDemo.cpp mathUtils.o drawUtils.o imageloader.o Mouse.o Box.o Plane.o socketInterfaceReceiver.o UDPSocket.o Socket.o
+	$(LD) $(INCLUDES) $(DEBUG) $(NDEBUG) -o IRCameraDemo IRCameraDemo.cpp mathUtils.o drawUtils.o imageloader.o Mouse.o Box.o Plane.o socketInterfaceReceiver.o UDPSocket.o Socket.o $(LIBS) $(PROFILER)
 
 ################################################
 #    Object files                              #
@@ -32,6 +32,9 @@ drawUtils.o: drawUtils.cpp
 
 imageloader.o: imageloader.cpp
 	$(CC) $(INCLUDES) $(DEBUG) $(NDEBUG) -c imageloader.cpp $(PROFILER)
+
+Mouse.o: Mouse.cpp
+	$(CC) $(INCLUDES) $(DEBUG) $(NDEBUG) -c Mouse.cpp $(PROFILER)
 
 Box.o: Box.cpp
 	$(CC) $(INCLUDES) $(DEBUG) $(NDEBUG) -c Box.cpp $(PROFILER)
