@@ -125,7 +125,7 @@ void printMatrix(Matrix3<T> m)
   printVector(m.c);
 }
 
-float angle(const Vector3f &Va, const Vector3f &Vb, const Vector3f &Vn)
+float angle(Vector3f Va, Vector3f Vb, Vector3f Vn)
 {
   float sina = (Va%Vb).length();
   float cosa = Va*Vb;
@@ -135,16 +135,16 @@ float angle(const Vector3f &Va, const Vector3f &Vb, const Vector3f &Vn)
   return angle;
 }
 
-void trackingAngles(const Vector3f& track, const Vector3f &zero_pan_axis, const Vector3f &pan_axis, float &pan, float &tilt) {
+void trackingAngles(Vector3f track, Vector3f zero_pan_axis, Vector3f pan_axis, float &pan, float &tilt) {
   // Projection of track onto the plane with normal zero_pan_axis
-  Vector3f track_onto_plane = track - (track*pan_axis) * pan_axis;
+  Vector3f track_onto_plane = track - pan_axis * (track*pan_axis);
   float backup_pan = pan;
   pan = ToDeg(angle(zero_pan_axis, track_onto_plane, pan_axis));
   if (pan > 90.0)
     pan -= 180.0;
   else if (pan < -90.0)
     pan += 180.0;
-  Vector3d tilt_axis = zero_pan_axis%pan_axis;
+  Vector3f tilt_axis = zero_pan_axis%pan_axis;
   // tilt_axis gets rotated by the pan
   tilt_axis = Matrix3f(ToRad(pan), pan_axis) * tilt_axis;
   tilt = ToDeg(angle(track_onto_plane, track, tilt_axis)) - 90.0;
@@ -202,9 +202,12 @@ void loop(void)
     int roll = (int)dcm.roll_sensor / 100;
     Serial.printf("Yaw %d   Pitch %d   Roll %d\n", yaw, pitch, roll);
     
-    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
+    /*Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
                         * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
-                        * Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
+                        * Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0));*/
+    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(1.0, 0.0, 0.0))
+                        * Matrix3f(ToRad(pitch), Vector3f(0.0, 1.0, 0.0))
+                        * Matrix3f(ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
     // Standard convention for yaw, pitch, roll gives the follwing coodinates:
     // x axis - front
     // y axis - 90 degrees clockwise from x axis when looking from up
@@ -212,7 +215,7 @@ void loop(void)
     printMatrix(rotation);
     
     float pan, tilt;
-    Vector3f track = rotation.col(1);
+    Vector3f track = rotation.col(0);
     Vector3f zero_pan_axis(0.0, 1.0, 0.0);
     Vector3f pan_axis(0.0, 0.0, 1.0);
     trackingAngles(track, zero_pan_axis, pan_axis, pan, tilt);
