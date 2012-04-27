@@ -1,4 +1,4 @@
-#ifndef AAP_IRCamera_h
+	#ifndef AAP_IRCamera_h
 #define AAP_IRCamera_h
 #define byte uint8_t
 #include <inttypes.h>
@@ -13,8 +13,7 @@ class AAP_IRCamera
 	//Assumes sources is an array of size 4
 	//sources[i] is invalid if both sources[i].x and sources[i].y are equal to 1023
 	void init();
-	void getRawData(Vector2i sources[]);
-
+	Vector2i getRawData();
 	Vector3f getPosition();
   private:
   	int _IRsensorAddress;
