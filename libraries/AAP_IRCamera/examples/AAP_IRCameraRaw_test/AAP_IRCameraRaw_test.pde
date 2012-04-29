@@ -5,6 +5,8 @@
 #include <I2C.h>
 AAP_IRCamera IRCamera;
 
+FastSerialPort0(Serial);
+
 void setup()
 {
   Serial.begin(9600);
