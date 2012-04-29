@@ -4,6 +4,10 @@
 #include <GL/glut.h>
 #include <GL/gle.h>
 
+#include <stdarg.h>
+#include <boost/algorithm/string.hpp>
+#include <boost/lexical_cast.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <math.h>
@@ -17,10 +21,18 @@
 
 #include "socketInterfaceReceiver.h"
 
+#include <SerialStream.h>
+#include <iostream>
+#define PORT "/dev/ttyUSB0" //This is system-specific
+
 using namespace std;
 USING_PART_OF_NAMESPACE_EIGEN
+using namespace LibSerial;
 
 void drawStuff();
+void displayTextInScreen(const char* textline, ...);
+void displayTextInScreen(float x, float y, const char* textline, ...);
+void bitmap_output(float x, float y, float z, const char* str, void *font);
 void glutMenu(int ID);
 void initGL();
 
@@ -60,6 +72,7 @@ int window_width, window_height;
 Mouse *mouse0, *mouse1;
 Box *servo0, *servo1;
 float pan = 0.0, tilt = 0.0;
+Box *APM;
 Box *wiiMote;
 Plane* ground;
 double wiiMote_length_x = 3.5;
@@ -68,6 +81,11 @@ double wiiMote_length_z = 3.0;
 
 bool draw_traj = false;
 vector<Vector3d> traj_positions;
+
+SerialStream ardu;
+
+float xx = 0.8;
+float yy = 0.95;
 
 void processLeft(int x, int y)
 {
@@ -136,13 +154,13 @@ void processNormalKeys(unsigned char key, int x, int y)
   else if (key == 'R')
     mouse1->setKeyPressed(ROTATETAN);
   else if (key == '=')
-    pan += 1.0;
+    xx += 0.1;
   else if (key == '-')
-    pan -= 1.0;
+    xx -= 0.1;
   else if (key == '+')
-    tilt += 1.0;
+    yy += 0.1;
   else if (key == '_')
-    tilt -= 1.0;
+    yy -= 0.1;
   else if (key == 'd') {
     draw_traj = !draw_traj;
     if (!draw_traj) {
@@ -204,21 +222,6 @@ void reshape (int w, int h)
    window_height = viewport[3];
 }
 
-/*void trackingAngles(Vector3f track, float &pan, float &tilt) {
-  Vector3f n_plane(0.0, 0.0, 1.0);
-  Vector3f track_onto_plane = track - track.projected(n_plane);
-  if (track_onto_plane.length_squared() > 0.1)
-    pan = ToDeg(track_onto_plane.angle(track_onto_plane, Vector3f(0.0, 1.0, 0.0)));
-  if (pan > 90) {
-    pan -= 180;
-    track_onto_plane *= -1;
-  } else if (pan < 90) {
-    pan += 180;
-    track_onto_plane *= -1;
-  }
-  tilt = ToDeg(track.angle(track, track_onto_plane)) - 45.0;
-}*/
-
 double angle(const Vector3d &Va, const Vector3d &Vb, const Vector3d &Vn) {
   double sina = (Va.cross(Vb)).norm();
   double cosa = Va.dot(Vb);
@@ -228,26 +231,26 @@ double angle(const Vector3d &Va, const Vector3d &Vb, const Vector3d &Vn) {
   return angle;
 }
 
-void trackingAngles(const Vector3d& track, const Vector3d &zero_pan_axis, const Vector3d &pan_axis, float &pan, float &tilt) {
-  // Projection of track onto the plane with normal zero_pan_axis
-  Vector3d track_onto_plane = track - track.dot(pan_axis) * pan_axis;
-  float backup_pan = pan;
-  pan = angle(zero_pan_axis, track_onto_plane, pan_axis) * 180.0/M_PI;
+void inverseKinematics(const Matrix3d& reference_frame, const Vector3d& track, float& pan, float& tilt) {
+  Vector3d local_track = reference_frame.transpose() * track;
+  pan = atan2(-local_track(0), local_track(1)) * 180.0/M_PI;
+  tilt = atan2(-local_track(2), sqrt(pow(local_track(0),2.0)+pow(local_track(1),2.0))) * 180.0/M_PI;
   if (pan > 90)
     pan -= 180;
   else if (pan < -90)
     pan += 180;
-  Vector3d tilt_axis = zero_pan_axis.cross(pan_axis);
-  // tilt_axis gets rotated by the pan
-  tilt_axis = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, pan_axis)) * tilt_axis;
-  glColor3f(0.0, 0.5, 0.5);
-  drawArrow(servo1->position, 20.0*tilt_axis);
-  tilt = angle(track_onto_plane, track, tilt_axis) * 180.0/M_PI - 90.0;
-  if (tilt < -90)
+  else
+    tilt *= -1;
+  if (tilt < 0)
     tilt += 180;
-  // Prevents rapid change of pan at the singularities of tilt near zero
-  if (tilt > -10 && tilt < 10)
-    pan = backup_pan;
+  if (local_track(2) < 0)
+    tilt += 180;
+}
+
+void forwardKinematics(const Matrix3d& reference_frame, Vector3d& track, const float& pan, const float& tilt) {
+  Matrix3d calc_rotation = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, reference_frame.col(2))) * reference_frame;
+  calc_rotation = ((Matrix3d) Eigen::AngleAxisd(tilt*M_PI/180.0, calc_rotation.col(0))) * calc_rotation;
+  track = calc_rotation.col(1);
 }
 
 void drawStuff()
@@ -272,42 +275,90 @@ void drawStuff()
 	glLightfv (GL_LIGHT2, GL_POSITION, lightThreePosition);
 	glLightfv (GL_LIGHT3, GL_POSITION, lightFourPosition);
 	
+	// Serial read
+  vector<string> serial_vect;
+  if (ardu.IsOpen()) {
+    char str[1024];   
+    cout << "serial ";
+	  while (true) {
+	    ardu >> str;
+	    serial_vect.push_back(str);
+	    if (strcmp(str,"END")==0) break;
+	    cout << str << "   ";
+	  }
+	  cout << endl;	
+	}
+	
 	ground->draw();
 	drawAxes(Vector3d::Zero(), Matrix3d::Identity());
   labelAxes(Vector3d::Zero(), Matrix3d::Identity());
-	
-	//drawAxes(mouse0->getPosition(), mouse0->getRotation());
-	//drawAxes(mouse1->getPosition(), mouse1->getRotation());
   
+  /************** START OF YAW-PITCH-ROLL TESTING **************/
+  double yaw = 0.0, pitch = 0.0, roll = 0.0;
+  if (serial_vect.size() >= 3) {
+    yaw   = boost::lexical_cast<double>(serial_vect[0].c_str());
+    pitch = boost::lexical_cast<double>(serial_vect[1].c_str());
+    roll  = boost::lexical_cast<double>(serial_vect[2].c_str());
+  }
+  Matrix3d APM_rot = ((Matrix3d) Eigen::AngleAxisd(-yaw*M_PI/180.0, Vector3d::UnitZ()))
+                     * ((Matrix3d) Eigen::AngleAxisd(pitch*M_PI/180.0, Vector3d::UnitX()))
+                     * ((Matrix3d) Eigen::AngleAxisd(-roll*M_PI/180.0, Vector3d::UnitY()));
+  APM->setTransform(APM->position, APM_rot);
+  APM->draw();
+  drawAxes(APM->position, APM->rotation);
+  
+  /************** END OF YAW-PITCH-ROLL TESTING **************/
+  
+  /************** START OF PAN-TILT MOUNT TRACKING TESTING **************/
+  // Simulation input and variables from APM
   servo0->setTransform(mouse1->getPosition(), mouse1->getRotation());
-  
+  Matrix3d mount_rotation = servo0->rotation;
   Vector3d track = mouse0->getRotation().col(0);
-  Vector3d zero_pan_axis = servo0->rotation.col(1);
-  Vector3d pan_axis = servo0->rotation.col(2);
-  glColor3f(1.0,0.0,0.0);
-  drawArrow(servo1->position, 20.0*track);
-  glColor3f(0.0,1.0,0.0);
-  drawArrow(servo0->position, 20.0*zero_pan_axis);
-  glColor3f(0.0,0.0,1.0);
-  drawArrow(servo0->position, 20.0*pan_axis);
-  trackingAngles(track, zero_pan_axis, pan_axis, pan, tilt);
+  
+  // Tracking algorithm
+  float new_pan, new_tilt;
+  inverseKinematics(mount_rotation, track, new_pan, new_tilt);
+  Vector3d calc_track, new_calc_track;
+  forwardKinematics(mount_rotation, calc_track, pan, tilt);
+  forwardKinematics(mount_rotation, new_calc_track, new_pan, new_tilt);
 
-  cout << pan << "\t\t" << tilt << endl;
+  double angle_diff = acos(calc_track.normalized().dot(new_calc_track.normalized())) * 180.0/M_PI;
+  if (angle_diff > 10.0) {
+    pan = new_pan;
+    tilt = new_tilt;
+  }
   
   if (pan > 45) pan = 45;
   else if (pan < -45) pan = -45;
-  if (tilt > 60) tilt = 60;
-  else if (tilt < -60) tilt = -60;
+  if (tilt > 135) tilt = 135;
+  else if (tilt < 45) tilt = 45;
   
-  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, pan_axis)) * servo0->rotation;
-  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(tilt*M_PI/180.0, servo1->rotation.col(0))) * servo1->rotation;
+  // Simulation and drawing
+  glDisable(GL_LIGHTING);
+  glColor3f(0.0, 0.0, 0.0);
+  displayTextInScreen(0.2, 1.15, "pan %.2f\ttilt %.2f\nnew_pan %.2f\tnew_tilt %.2f\nangle_diff %.2f\n", pan, tilt, new_pan, new_tilt, angle_diff);
+  glEnable(GL_LIGHTING);
+  
+  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(pan*M_PI/180.0, servo0->rotation.col(2))) * servo0->rotation;
+  servo1->rotation = ((Matrix3d) Eigen::AngleAxisd(tilt*M_PI/180.0-M_PI/2.0, servo1->rotation.col(0))) * servo1->rotation;
   servo1->setTransform(servo0->position+2.0*1.75*servo0->rotation.col(2), servo1->rotation);
+  mouse0->setTransform(servo1->position, mouse0->getRotation()); // don't change this
 
+  glColor3f(1.0,0.0,0.0);
+  drawArrow(servo1->position, 20.0*track);
+  glColor3f(0.0,1.0,0.0);
+  drawArrow(servo1->position, 20.0*calc_track);
+  glColor3f(0.0,0.0,1.0);
+  drawArrow(servo1->position, 20.0*new_calc_track);
   servo0->draw();
   drawAxes(servo0->position, servo0->rotation);
   servo1->draw();
   drawAxes(servo1->position, servo1->rotation);
 	
+	/************** END OF PAN-TILT MOUNT TRACKING TESTING **************/
+	
+	
+	/************** START OF IR LOCALIZATION PART 2 TESTING **************/
 	Vector3d t_pos;
 	Matrix3d t_rot;
 	vector<Vector2d> ir_pos;
@@ -423,6 +474,7 @@ void drawStuff()
   glEnable(GL_TEXTURE_2D);
 	glEnable(GL_LIGHTING);
 	glPopMatrix();
+  /************** END OF IR LOCALIZATION PART 2 TESTING **************/
 
   glutSwapBuffers ();
 }
@@ -459,8 +511,8 @@ int main (int argc, char * argv[])
 	
 	initGL();
 	
-	mouse0 = new Mouse(Vector3d::Zero(), Matrix3d::Identity());
-	mouse1 = new Mouse(Vector3d::Zero(), Matrix3d::Identity());
+	mouse0 = new Mouse(Vector3d::Zero(), (Matrix3d) Eigen::AngleAxisd(-M_PI/2.0, Vector3d::UnitZ()));
+	mouse1 = new Mouse(Vector3d(0.0, 0.0, 10.0), (Matrix3d) Eigen::AngleAxisd(-M_PI, Vector3d::UnitZ()));
 
 	glGetDoublev(GL_MODELVIEW_MATRIX, model_view);
 	glGetDoublev(GL_PROJECTION_MATRIX, projection);
@@ -468,12 +520,54 @@ int main (int argc, char * argv[])
 
   receiverInit();
 
+  //Serial port initialization
+  cout << "Opening serial port " << PORT << endl;
+  while (!ardu.IsOpen()) {
+    ardu.Open(PORT);
+    cout << "Failed to open the port" << endl;
+    break;  // Comment out this line to retry the opening
+  }
+  if (ardu.IsOpen())
+    cout << "The port was opened sucessfully" << endl;
+  ardu.SetBaudRate(SerialStreamBuf::BAUD_9600);   //The arduino must be setup to use the same baud rate
+  ardu.SetCharSize(SerialStreamBuf::CHAR_SIZE_8);
+
   wiiMote = new Box(Vector3d(0.0,-30.0-wiiMote_length_y/2.0,0.0), Matrix3d::Identity(), Vector3d(wiiMote_length_x/2.0, wiiMote_length_y/2.0, wiiMote_length_z/2.0), 0.0, 0.5, 0.5);
-  servo0 = new Box(Vector3d(0.0, 0.0, 5.0), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.2, 0.8);
-  servo1 = new Box(Vector3d(0.0, 0.0, 5.0), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.8, 0.2);
+  servo0 = new Box(Vector3d::Zero(), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.2, 0.8); // Its transform will be set by the mouse's
+  servo1 = new Box(Vector3d::Zero(), Matrix3d::Identity(), Vector3d(1.5, 1.0, 1.75), 0.2, 0.8, 0.2); // Same
+  APM = new Box(Vector3d(0.0, 0.0, 20.0), Matrix3d::Identity(), Vector3d(2.5, 5.0, 1.0), 0.0, 0.0, 0.8);
   ground = new Plane(Vector3d(0.0, 0.0, 0.0), (Matrix3d) Eigen::AngleAxisd(M_PI/2.0, -Vector3d::UnitY()), 5*8);
 
   glutMainLoop ();
+}
+
+void displayTextInScreen(float x, float y, const char* textline, ...)
+{
+  glPushMatrix();
+	glLoadIdentity();
+  va_list argList;
+	char cbuffer[5000];
+	va_start(argList, textline);
+	vsnprintf(cbuffer, 5000, textline, argList);
+	va_end(argList);
+	vector<string> textvect;
+	boost::split(textvect, cbuffer, boost::is_any_of("\n"));
+	float scale = tan(fovy/2.0) * (-z_near*1.002);
+	for (int i=0; i<textvect.size(); i++) {
+		bitmap_output(x * scale, (y-0.08*i) * scale, -z_near*1.002, textvect[i].c_str(), GLUT_BITMAP_TIMES_ROMAN_24);
+	}
+  glPopMatrix();
+}
+
+void bitmap_output(float x, float y, float z, const char* str, void *font)
+{
+  int len, i;
+
+  glRasterPos3f(x, y, z);
+  len = (int) strlen(str);
+  for (i = 0; i < len; i++) {
+    glutBitmapCharacter(font, str[i]);
+  }
 }
 
 void initGL()        

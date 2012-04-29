@@ -35,7 +35,7 @@ void Box::setTransform(const Vector3d& pos, const Matrix3d& rot)
 				vertex_positions[axis_sign_ind*3 + axis][vertex_ind] = position + 
 																															 vertex_sign[vertex_ind][0]*half_length(0)*rotation.col(0) + 
 																															 vertex_sign[vertex_ind][1]*half_length(1)*rotation.col(1) + 
-																															 vertex_sign[vertex_ind][2]*half_length(0)*rotation.col(2);
+																															 vertex_sign[vertex_ind][2]*half_length(2)*rotation.col(2);
 			}
 		}
 	}
