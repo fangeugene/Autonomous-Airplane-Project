@@ -32,9 +32,25 @@ void AAP_IRCamera::init()
 	// IR sensor initialize
 	Write_2bytes(0x30,0x01); delay(10);
 	Write_2bytes(0x30,0x08); delay(10);
-	Write_2bytes(0x06,0x90); delay(10);
-	Write_2bytes(0x08,0xC0); delay(10);
-	Write_2bytes(0x1A,0x40); delay(10);
+	
+	
+	//Sensitivity Settings
+	/*Write_2bytes(0x06,0x90); delay(10);
+	Write_2bytes(0x08,0xC0); delay(10);	
+	Write_2bytes(0x1A,0x40); delay(10); */
+	Write_2bytes(0x00, 0x02); delay(10);
+	Write_2bytes(0x01, 0x00); delay(10);
+	Write_2bytes(0x02, 0x00); delay(10);
+	Write_2bytes(0x03, 0x71); delay(10);
+	Write_2bytes(0x04, 0x01); delay(10);
+	Write_2bytes(0x05, 0x00); delay(10);
+	Write_2bytes(0x06, 0x64); delay(10);	//max blob size - ranges from 0x62 to 0xC8
+	Write_2bytes(0x07, 0x00); delay(10);	
+	Write_2bytes(0x08, 0xFE); delay(10);	//gain - smaller values = higher gain
+	Write_2bytes(0x1A, 0xFD); delay(10);	//gain limit - must be less than gain
+	Write_2bytes(0x1B, 0x05); delay(10);	//min blob size - ranges from 0x03 to 0x05
+	
+	//Continuous write mode?
 	Write_2bytes(0x33,0x33); delay(10);
 	delay(100);
 }
