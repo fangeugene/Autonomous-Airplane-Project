@@ -98,7 +98,7 @@ int panAngleToPW(int angle) {
 
 int tiltAngleToPW(int angle) {
   int servo_angle = 0.005404 * pow(angle, 2.0) + 1.54987 * ((float) angle) - 3.02604;
-  return linearMap(servo_angle, -45-1, 45-1, 2000, 1000);
+  return linearMap(servo_angle, 45-1, 135-1, 2000, 1000);
 }
 
 /*
@@ -160,7 +160,7 @@ void setup(void)
   pinMode(53, OUTPUT);
   digitalWrite(53, HIGH);
   
-  Serial.begin(115200);
+  Serial.begin(9600);
   Serial.println("Doing IMU startup...");
   
   isr_registry.init();
@@ -190,17 +190,17 @@ void loop(void)
     Vector3f gyros = imu.get_gyro();
     Vector3f accels = imu.get_accel();
     
-    Serial.printf_P(PSTR("r:%4d  p:%4d  y:%3d  g=(%5.1f %5.1f %5.1f)  a=(%5.1f %5.1f %5.1f)\n"),
+    /*Serial.printf_P(PSTR("r:%4d  p:%4d  y:%3d  g=(%5.1f %5.1f %5.1f)  a=(%5.1f %5.1f %5.1f)\n"),
       (int)dcm.roll_sensor / 100,
       (int)dcm.pitch_sensor / 100,
       (uint16_t)dcm.yaw_sensor / 100,
       gyros.x, gyros.y, gyros.z,
-      accels.x, accels.y, accels.z);
+      accels.x, accels.y, accels.z);*/
     
-    int yaw = (uint16_t)dcm.yaw_sensor / 100;
-    int pitch = (int)dcm.pitch_sensor / 100;
-    int roll = (int)dcm.roll_sensor / 100;
-    Serial.printf("Yaw %d   Pitch %d   Roll %d\n", yaw, pitch, roll);
+    float yaw = (float)dcm.yaw_sensor / 100.0;
+    float pitch = (float)dcm.pitch_sensor / 100.0;
+    float roll = (float)dcm.roll_sensor / 100.0;
+    Serial.printf("%3.2f %3.2f %3.2f END\n", yaw, pitch, roll);
     
     /*Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
                         * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
@@ -223,8 +223,8 @@ void loop(void)
     int panServo  = panAngleToPW(int(pan));
     int tiltServo = tiltAngleToPW(int(tilt));
     
-    Serial.printf("Pan:   %4.2f  Servo 0 Value: %d\n", pan,  panServo);
-    Serial.printf("Tilt:  %4.2f  Servo 1 Value: %d\n", tilt, tiltServo);
+    //Serial.printf("Pan:   %4.2f  Servo 0 Value: %d\n", pan,  panServo);
+    //Serial.printf("Tilt:  %4.2f  Servo 1 Value: %d\n", tilt, tiltServo);
     APM_RC.OutputCh(0, panServo);
     APM_RC.OutputCh(1, tiltServo);
   }
