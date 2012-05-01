@@ -190,15 +190,20 @@ void loop(void)
     for (int i=0; i<4; i++)
       if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
 	ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
-    Vector2f mean_ir_pos;
-    for (int i=0; i<4; i++)
-      mean_ir_pos += ir_pos[i];
-    mean_ir_pos /= ir_pos.size();
-    Vector2f ccd_center(512,384);
-    float focal_length = 1280;
-    Vector2f off_center = mean_ir_pos - ccd_center;
-    Vector3f track = mount_rotation * Vector3f(off_center.x, focal_length, off_center.y);
-    track.normalize();
+    Vector3f track;
+    if (ir_pos.size() > 0) {
+      Vector2f mean_ir_pos;
+      for (int i=0; i<ir_pos.size(); i++)
+        mean_ir_pos += ir_pos[i];
+      mean_ir_pos /= ir_pos.size();
+      Vector2f ccd_center(512,384);
+      float focal_length = 1280;
+      Vector2f off_center = mean_ir_pos - ccd_center;
+      track = mount_rotation * Vector3f(off_center.x, focal_length, off_center.y);
+      track.normalize();
+    } else {
+      track = Vector3f(0.0, 0.0, 1.0);
+    }
     
     Mount.update(mount_rotation, track);
     Serial.printf(" TRACK %3.2f %3.2f %3.2f END\n", track.x, track.y, track.z);
