@@ -18,6 +18,10 @@
 #include <APM_RC.h> // ArduPilot Mega RC Library
 APM_RC_APM1 APM_RC;
 
+#include <AAP_IRCamera.h>
+#include <AAP_Mount.h>
+#include <I2C.h>
+
 #include <AP_Math.h>
 #include <matrix3.h>
 #include <polygon.h>
@@ -78,38 +82,13 @@ static unsigned long 	medium_loopCounter = 0;
 // Number of milliseconds used in last main loop cycle
 static uint8_t 		delta_ms_fast_loop;
 
+AAP_IRCamera IRCamera;
+AAP_Mount Mount;
 static void flash_leds(bool on)
 {
   digitalWrite(A_LED_PIN, on?LED_OFF:LED_ON);
   digitalWrite(C_LED_PIN, on?LED_ON:LED_OFF);
 }
-
-/** Returns the mapped integer of "value". This linear map F is defined such that:
-  * F(value_min) = mapped_min
-  * F(value_max) = mapped_max
-  **/
-int linearMap(int value, int value_min, int value_max, int mapped_min, int mapped_max) {
-  return mapped_min + (((float)(value - value_min))/((float)(value_max-value_min)))*(mapped_max-mapped_min);
-}
-
-int panAngleToPW(int angle) {
-  return linearMap(angle, -45+13, 45+13, 1000, 2000);
-}
-
-int tiltAngleToPW(int angle) {
-  int servo_angle = 0.005404 * pow(angle, 2.0) + 1.54987 * ((float) angle) - 3.02604;
-  return linearMap(servo_angle, 45-1, 135-1, 2000, 1000);
-}
-
-/*
-int servoToTiltAngle(int servoAngle) {
-  return -0.001468 * pow(servoAngle, 2.0) + 0.64516 * ((float) servoAngle) + 1.95896;
-}
-
-int tiltToServoAngle(int tiltAngle) {
-  return 0.005404 * pow(tiltAngle, 2.0) + 1.54987 * ((float) tiltAngle) - 3.02604;
-}
-*/
 
 template <typename T>
 void printVector(Vector3<T> v)
@@ -135,26 +114,6 @@ float angle(Vector3f Va, Vector3f Vb, Vector3f Vn)
   return angle;
 }
 
-void trackingAngles(Vector3f track, Vector3f zero_pan_axis, Vector3f pan_axis, float &pan, float &tilt) {
-  // Projection of track onto the plane with normal zero_pan_axis
-  Vector3f track_onto_plane = track - pan_axis * (track*pan_axis);
-  float backup_pan = pan;
-  pan = ToDeg(angle(zero_pan_axis, track_onto_plane, pan_axis));
-  if (pan > 90.0)
-    pan -= 180.0;
-  else if (pan < -90.0)
-    pan += 180.0;
-  Vector3f tilt_axis = zero_pan_axis%pan_axis;
-  // tilt_axis gets rotated by the pan
-  tilt_axis = Matrix3f(ToRad(pan), pan_axis) * tilt_axis;
-  tilt = ToDeg(angle(track_onto_plane, track, tilt_axis)) - 90.0;
-  if (tilt < -90.0)
-    tilt += 180.0;
-  // Prevents rapid change of pan at the singularities of tilt near zero
-  if (tilt > -10.0 && tilt < 10.0)
-    pan = backup_pan;
-}
-
 void setup(void)
 {
   pinMode(53, OUTPUT);
@@ -169,6 +128,9 @@ void setup(void)
   
   imu.init(IMU::COLD_START, delay, flash_leds, &timer_scheduler);
   dcm.matrix_reset();
+  
+  IRCamera.init();
+  Mount.init(&APM_RC, 0, 1);
   
   delay(1000);
 }
@@ -200,32 +162,46 @@ void loop(void)
     float yaw = (float)dcm.yaw_sensor / 100.0;
     float pitch = (float)dcm.pitch_sensor / 100.0;
     float roll = (float)dcm.roll_sensor / 100.0;
-    Serial.printf("%3.2f %3.2f %3.2f END\n", yaw, pitch, roll);
+    Serial.printf(" YPR %3.2f %3.2f %3.2f END\n", yaw, pitch, roll);
     
-    /*Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0))
+    Matrix3f rotation = Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0))
                         * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
-                        * Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0));*/
-    Matrix3f rotation = Matrix3f(ToRad(roll), Vector3f(1.0, 0.0, 0.0))
-                        * Matrix3f(ToRad(pitch), Vector3f(0.0, 1.0, 0.0))
-                        * Matrix3f(ToRad(yaw), Vector3f(0.0, 0.0, 1.0));
-    // Standard convention for yaw, pitch, roll gives the follwing coodinates:
-    // x axis - front
-    // y axis - 90 degrees clockwise from x axis when looking from up
-    // z axis - down
+                        * Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0));
+    
+    Vector2i ir_pos_raw[4];
+    IRCamera.getRawData(ir_pos_raw);
+    Serial.printf(" IRPOS %i %i %i %i %i %i %i %i END\n", ir_pos_raw[0].x, ir_pos_raw[0].y,
+                                                          ir_pos_raw[1].x, ir_pos_raw[1].y,
+                                                          ir_pos_raw[2].x, ir_pos_raw[2].y,
+                                                          ir_pos_raw[3].x, ir_pos_raw[3].y);
+    Vector3f pos;
+    IRCamera.getTransform2(pos, rotation);
+    Serial.printf(" POS ");
+    printVector(pos);
+    Serial.printf(" END ");
+    Serial.printf(" ROT ");
     printMatrix(rotation);
+    Serial.printf(" END ");
+
+    //Update mount
+    Matrix3f mount_rotation = Matrix3f(ToRad(180.0), rotation.col(2)) * rotation;
     
-    float pan, tilt;
-    Vector3f track = rotation.col(0);
-    Vector3f zero_pan_axis(0.0, 1.0, 0.0);
-    Vector3f pan_axis(0.0, 0.0, 1.0);
-    trackingAngles(track, zero_pan_axis, pan_axis, pan, tilt);
+    vector<Vector2f> ir_pos;
+    for (int i=0; i<4; i++)
+      if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
+	ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
+    Vector2f mean_ir_pos;
+    for (int i=0; i<4; i++)
+      mean_ir_pos += ir_pos[i];
+    mean_ir_pos /= ir_pos.size();
+    Vector2f ccd_center(512,384);
+    float focal_length = 1280;
+    Vector2f off_center = mean_ir_pos - ccd_center;
+    Vector3f track = mount_rotation * Vector3f(off_center.x, focal_length, off_center.y);
+    track.normalize();
     
-    int panServo  = panAngleToPW(int(pan));
-    int tiltServo = tiltAngleToPW(int(tilt));
-    
-    //Serial.printf("Pan:   %4.2f  Servo 0 Value: %d\n", pan,  panServo);
-    //Serial.printf("Tilt:  %4.2f  Servo 1 Value: %d\n", tilt, tiltServo);
-    APM_RC.OutputCh(0, panServo);
-    APM_RC.OutputCh(1, tiltServo);
+    Mount.update(mount_rotation, track);
+    Serial.printf(" TRACK %3.2f %3.2f %3.2f END\n", track.x, track.y, track.z);
+    Serial.printf(" PANTILT %3.2f %3.2f END\n", Mount.getPan(), Mount.getTilt());
   }
 }

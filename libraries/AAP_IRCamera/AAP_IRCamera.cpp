@@ -77,6 +77,63 @@ AAP_IRCamera::getPosition()
 	position.z = 3;
 }
 
+bool AAP_IRCamera::getTransform2(Vector3f& pos, Matrix3f& rot)
+{
+	Vector2i ir_pos_raw[4];
+	getRawData(ir_pos_raw);
+
+	vector<Vector2f> ir_pos;
+	for (int i=0; i<4; i++)
+		if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
+			ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
+
+	// Known fixed separation between ir sources
+	float separation = 7.0;
+	Vector3f ground_normal(0.0, 0.0, 1.0);
+
+	// For every IR source, computed the normalized ray that comes from the camera's origin and crosses the image plane at the pixel location.
+	Vector2f ccd_center(512,384);
+	float focal_length = 1280;
+	vector<Vector3f> test_rays;
+	for (int i=0; i<ir_pos.size(); i++) {
+		Vector2f off_center = ir_pos[i] - ccd_center;
+		Vector3f test_ray = rot * Vector3f(off_center.x, focal_length, off_center.y);
+		test_rays.push_back(test_ray.normalized());
+	}
+
+	if (ir_pos.size() >= 2) {
+		// Each ray intersects the plane at a point. Identify the point that is the closest (miny_index) and the farthest (maxy_index) from the camera.
+		int miny_index = 0;
+		int maxy_index = 0;
+		for (int i=1; i<test_rays.size(); i++) {
+			if (test_rays[i].y < test_rays[miny_index].y)
+				miny_index = i;
+			if (test_rays[i].y > test_rays[maxy_index].y)
+				maxy_index = i;
+		}
+
+		// The height from the plane to the camera.
+		float height = (ir_pos.size()-1)*separation/(test_rays[maxy_index]/(ground_normal * test_rays[maxy_index]) - test_rays[miny_index]/(ground_normal * test_rays[miny_index])).length();
+
+	    // Adjust the length of the ray such that the length is the distance from the camera's origin to the plane where it intersects.
+	    for (int i=0; i<test_rays.size(); i++) {
+	    	float t = - height / (ground_normal * test_rays[i]);
+	    	test_rays[i] = test_rays[i] * t;
+	    }
+
+	    // Rotation whose Y axis is aligned with the IR sources.
+	    Matrix3f aligned_mat;
+	    aligned_mat.setCol(1, (test_rays[maxy_index] - test_rays[miny_index]).normalized());
+	    aligned_mat.setCol(2, Vector3f(0.0, 0.0, 1.0));
+	    aligned_mat.setCol(0, aligned_mat.col(1) % (aligned_mat.col(2)));
+
+	    rot = aligned_mat.transposed() * rot;
+	    pos = aligned_mat.transposed() * (-test_rays[miny_index]);
+
+	    return true;
+	}
+	return false;
+}
 
 // Private Methods //////////////////////////////////////////////////////////////
 
