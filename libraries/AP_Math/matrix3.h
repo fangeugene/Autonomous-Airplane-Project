@@ -174,6 +174,17 @@ public:
 			return Vector3<T>(a.z, b.z, c.z);
 	}
 
+	void setCol(int i, Vector3<T> v)
+	{
+		if (i == 0) {
+			a.x = v.x;	b.x = v.y;	c.x = v.z;
+		} else if (i == 1) {
+			a.y = v.x;	b.y = v.y;	c.y = v.z;
+		} else {
+			a.z = v.x;	b.z = v.y;	c.z = v.z;
+		}
+	}
+
 };
 
 typedef Matrix3<int16_t>		Matrix3i;

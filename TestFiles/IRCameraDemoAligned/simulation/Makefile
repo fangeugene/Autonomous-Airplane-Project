@@ -3,7 +3,7 @@ HOSTNAME=-D$(shell uname -n | sed 's/-/_/g' | sed 's/\./_/g')
 
 SOCKETS_DIR = ../utils/
 
-LIBS = -L/usr/lib/ -lglut -lgle -lGLU
+LIBS = -L/usr/lib/ -lglut -lgle -lGLU -lserial
 INCLUDES = -I/usr/local/include/ -I/usr/include/ -I/usr/include/eigen2
 COMPILEFLAG=
 LDFLAG=-lrt

@@ -3,6 +3,7 @@
 #define byte uint8_t
 #include <inttypes.h>
 
+#include "../vector/vector.h"
 #include "../AP_Math/AP_Math.h"
 
 class AAP_IRCamera
@@ -16,6 +17,7 @@ class AAP_IRCamera
 	void getRawData(Vector2i sources[]);
 	void getRawDataFull(Vector2i sources[], uint8_t intensity[]);
 	Vector3f getPosition();
+	bool getTransform2(Vector3f& pos, Matrix3f& rot);
   private:
   	int _IRsensorAddress;
 	int _slaveAddress;
