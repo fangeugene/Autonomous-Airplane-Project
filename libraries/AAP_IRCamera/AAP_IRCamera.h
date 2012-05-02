@@ -14,12 +14,12 @@ class AAP_IRCamera
 	//sources[i] is invalid if both sources[i].x and sources[i].y are equal to 1023
 	void init();
 	void getRawData(Vector2i sources[]);
-
+	void getRawDataFull(Vector2i sources[], uint8_t intensity[]);
 	Vector3f getPosition();
   private:
   	int _IRsensorAddress;
 	int _slaveAddress;
-	byte _data_buf[16];
+	byte _data_buf[37];
 	void Write_2bytes(byte d1, byte d2);
 };
 #endif
