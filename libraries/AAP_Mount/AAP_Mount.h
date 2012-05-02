@@ -59,6 +59,11 @@ class AAP_Mount
 			track = calc_rotation.col(1);
 		}
 
+		void forwardKinematics(const Matrix3f& reference_frame, Matrix3f& rotation, const float& pan, const float& tilt) {
+			rotation = Matrix3f(ToRad(pan), reference_frame.col(2)) * reference_frame;
+			rotation = Matrix3f(ToRad(tilt), rotation.col(0)) * rotation;
+		}
+
 		void inverseKinematics(const Matrix3f& reference_frame, const Vector3f& track, float& pan, float& tilt) {
 			Vector3f local_track = reference_frame.transposed() * track;
 			pan = ToDeg(atan2(-local_track.x, local_track.y));
@@ -76,7 +81,13 @@ class AAP_Mount
 		}
 
 		float setPan(float p_pan) {
-			pan = p_pan;
+			// limits the change in pan
+			if (abs(p_pan-pan) > 10.0) {
+				if (p_pan > pan)	pan += 10.0;
+				else				pan -= 10.0;
+			} else {
+				pan = p_pan;
+			}
 			if (pan > 58.9) pan = 58.9;
 			else if (pan < -32.9) pan = -32.9;
 			APM_RC->OutputCh(panServoCh, panAngleToPW(int(pan)));
@@ -84,7 +95,13 @@ class AAP_Mount
 		}
 
 		float setTilt(float p_tilt) {
-			tilt = p_tilt;
+			// limits the change in tilt
+			if (abs(p_tilt-tilt) > 10.0) {
+				if (p_tilt > tilt)	tilt += 10.0;
+				else				tilt -= 10.0;
+			} else {
+				tilt = p_tilt;
+			}
 			if (tilt > 121.9) tilt = 121.9;
 			else if (tilt < 62.0) tilt = 62.0;
 			APM_RC->OutputCh(tiltServoCh, tiltAngleToPW(int(tilt)));
