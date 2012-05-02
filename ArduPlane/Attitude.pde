@@ -163,8 +163,8 @@ static void stabilize()
           // Limit pitchCorrection
           if (pitchCorrection > 1000) {      // Be more agressive when climbing
             pitchCorrection = 1000;
-          } else if (pitchCorrection < -250) {  // Be less agressive when diving
-            pitchCorrection = -250;
+          } else if (pitchCorrection < 0) {  // Don't force a dive
+            pitchCorrection = 0;
           }
           
           g.channel_pitch.servo_out += pitchCorrection;
