@@ -143,32 +143,34 @@ static void stabilize()
         
         // Altitude maintaining control rev 2...
         float altitude = aapSonar.getDistance() - 15;
-        float setpoint = 200; // in centimeters
+        float setpoint = 50; // in centimeters
         
         if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
           // the plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
           // slowly decrease the motor output, limited between 50% and 100%
           // plane will either lower itself under 620cm or have time to become level so that the sonar sensor can detect the ground
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 50, 100);
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 95, 100);
           
           // TODO: change this implementation to use gyro to tell if plane is level or not
         } else {
           // Control throttle, limited betweeen 75% and 100%
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
+          //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
+          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
           
           // Also use elevator
-          float pitchCorrection = (setpoint - altitude) * 10;
+          float pitchCorrection = (setpoint - altitude) * 15;
           // channel_pitch.servo_out can range from +/- 2500
           
           // Limit pitchCorrection
-          if (pitchCorrection > 1000) {      // Be more agressive when climbing
-            pitchCorrection = 1000;
-          } else if (pitchCorrection < 0) {  // Don't force a dive
-            pitchCorrection = 0;
+          if (pitchCorrection > 2000) {      // Be more agressive when climbing
+            pitchCorrection = 2000;
+          } else if (pitchCorrection < -20) {  // Force minimal dive
+            pitchCorrection = -20;
           }
-          
-          g.channel_pitch.servo_out += pitchCorrection;
+
+          g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward bias
         }
+        g.channel_throttle.servo_out = 0;
 }
 
 static void crash_checker()
