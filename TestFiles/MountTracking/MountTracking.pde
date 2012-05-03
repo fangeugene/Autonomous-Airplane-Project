@@ -174,20 +174,14 @@ void loop(void)
                                                           ir_pos_raw[1].x, ir_pos_raw[1].y,
                                                           ir_pos_raw[2].x, ir_pos_raw[2].y,
                                                           ir_pos_raw[3].x, ir_pos_raw[3].y);
-    //Vector3f APM_position;
-    //IRCamera.getTransform2(APM_position, APM_rotation);
-    //Serial.printf(" POS ");
-    //printVector(APM_position);
-    //Serial.printf(" END ");
-    //Serial.printf(" ROT ");
-    //printMatrix(APM_rotation);
-    //Serial.printf(" END ");
 
     //There is a 180 shift between the mount's base and the APM
     Matrix3f mount_rotation = Matrix3f(ToRad(180.0), APM_rotation.col(2)) * APM_rotation;
     //There is a 180 shift between the end of the mount and the camera
     Matrix3f camera_rotation;
-    Mount.forwardKinematics(mount_rotation, camera_rotation, Mount.getPan(), Mount.getTilt());
+    //TODO
+    //Mount.forwardKinematics(mount_rotation, camera_rotation, Mount.getPan(), Mount.getTilt());
+    Mount.forwardKinematics(mount_rotation, camera_rotation, 0.0, 90.0);
     camera_rotation = Matrix3f(ToRad(180.0), camera_rotation.col(1)) * camera_rotation;
     
     //Filter out the valid IR positions
@@ -212,7 +206,26 @@ void loop(void)
       track = Vector3f(0.0, 0.0, 1.0);
     }
     
-    Mount.update(mount_rotation, track);
+    Serial.printf(" PRECAMROT ");
+    printMatrix(camera_rotation);
+    Serial.printf(" END ");
+    
+    Vector3f camera_position;
+    //Matrix3f APM_to_camera = camera_rotation * APM_rotation.transpose();
+    IRCamera.getTransform2(camera_position, camera_rotation);
+    //APM_rotation = APM_to_camera.transposed() * camera_rotation;
+    
+    Serial.printf(" CAMPOS ");
+    printVector(camera_position);
+    Serial.printf(" END ");
+    Serial.printf(" CAMROT ");
+    printMatrix(camera_rotation);
+    Serial.printf(" END ");
+    
+    //TODO
+    //Mount.update(mount_rotation, track);
+    Mount.setPan(0.0);
+    Mount.setTilt(90.0);
     Serial.printf(" TRACK %3.2f %3.2f %3.2f END\n", track.x, track.y, track.z);
     Serial.printf(" PANTILT %3.2f %3.2f END\n", Mount.getPan(), Mount.getTilt());
   }

@@ -45,7 +45,11 @@ class AAP_Mount
 		*/
 
 	public:
-		AAP_Mount() {}
+		AAP_Mount() {
+			pan = 0.0;
+			tilt = 90.0;
+			APM_RC = NULL;
+		}
 
 		void init(APM_RC_APM1* p_APM_RC, int p_panServoCh, int p_tiltServoCh) {
 			APM_RC = p_APM_RC;
