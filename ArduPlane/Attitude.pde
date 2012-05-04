@@ -118,38 +118,13 @@ static void stabilize()
 	//	g.channel_roll.servo_out = roll_slew_limit(g.channel_roll.servo_out);
 	//#endif
 
-        
-        // Throttle control for sonar landing
-        //AAP_Sonar aapSonar;
-        // g.channel_throttle.servo_out ranges from 0 to 100
-        /*
-        g.channel_throttle.servo_out = (int)aapSonar.getDistance() - 50;
-        if (g.channel_throttle.servo_out < 15) {
-          g.channel_throttle.servo_out = 15;
-        }
-        */
-        
-        
-        /*
-        // The beginnings of a control algorithm for maintining altitude...
-        //AAP_Sonar aapSonar;
-        //AAP_VelocityController aapVC;
-        float altitude = aapSonar.getDistance() - 15;
-        float setpoint = 200; // in centimeters
-        
-        g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.01, 0);       // 0.007
-        
-        */
-        
-        // Altitude maintaining control rev 2...
+        // Begin Landing Sequence
         float altitude = aapSonar.getDistance() - 15;
         float setpoint = 50; // in centimeters
         
         if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
-          // the plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
-          // slowly decrease the motor output, limited between 50% and 100%
-          // plane will either lower itself under 620cm or have time to become level so that the sonar sensor can detect the ground
-          //g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 95, 100);
+          // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
+          // Don't try to dive or climb
           
         } else {
           // Control throttle, limited betweeen 75% and 100%
@@ -159,7 +134,6 @@ static void stabilize()
           // Also use elevator
           float pitchCorrection = (setpoint - altitude) * 15;
           // channel_pitch.servo_out can range from +/- 2500
-          
           // Limit pitchCorrection
           if (pitchCorrection > 2000) {      // Be more agressive when climbing
             pitchCorrection = 2000;
@@ -170,13 +144,14 @@ static void stabilize()
           g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward/downwards bias
         }
         
-        // throttle off at low altitues
+        // Throttle off at low altitues
         if (altitude > 200) {
           g.channel_throttle.servo_out = 15;
         } else {
           g.channel_throttle.servo_out = 0;
         }
-
+        
+        // End Landing Sequence
 }
 
 static void crash_checker()
