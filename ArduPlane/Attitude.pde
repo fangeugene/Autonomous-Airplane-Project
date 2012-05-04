@@ -149,13 +149,12 @@ static void stabilize()
           // the plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
           // slowly decrease the motor output, limited between 50% and 100%
           // plane will either lower itself under 620cm or have time to become level so that the sonar sensor can detect the ground
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 95, 100);
+          //g.channel_throttle.servo_out = (int)aapVC.getOutput(619, 620, 0.1, 0.00, 95, 100);
           
-          // TODO: change this implementation to use gyro to tell if plane is level or not
         } else {
           // Control throttle, limited betweeen 75% and 100%
           //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
-          g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
+          //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
           
           // Also use elevator
           float pitchCorrection = (setpoint - altitude) * 15;
