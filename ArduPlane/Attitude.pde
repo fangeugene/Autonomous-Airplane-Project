@@ -168,9 +168,16 @@ static void stabilize()
             pitchCorrection = -20;
           }
 
-          g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward bias
+          g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward/downwards bias
         }
-        g.channel_throttle.servo_out = 0;
+        
+        // throttle off at low altitues
+        if (altitude > 200) {
+          g.channel_throttle.servo_out = 15;
+        } else {
+          g.channel_throttle.servo_out = 0;
+        }
+
 }
 
 static void crash_checker()
