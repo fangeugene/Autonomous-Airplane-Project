@@ -124,7 +124,7 @@ static void stabilize()
         
         if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
           // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
-          // Don't try to dive or climb
+          // Don't try to dive or climb, just use IMU to stabilize
           
         } else {
           // Control throttle, limited betweeen 75% and 100%
