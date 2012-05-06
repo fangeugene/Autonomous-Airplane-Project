@@ -52,6 +52,16 @@ version 2.1 of the License, or (at your option) any later version.
 #include <GCS_MAVLink.h>    // MAVLink GCS definitions
 #include <memcheck.h>
 
+#include <AAP_IRCamera.h>
+#include <AAP_Mount.h>
+#include <I2C.h>
+
+#include <AP_Math.h>
+#include <matrix3.h>
+#include <polygon.h>
+#include <vector2.h>
+#include <vector3.h>
+
 // Configuration
 #include "config.h"
 
@@ -631,6 +641,13 @@ static float 			load;
 void setup() {
 	memcheck_init();
 	init_ardupilot();
+
+        // IR Camera
+        AAP_IRCamera IRCamera;
+        AAP_Mount Mount;
+        
+        IRCamera.init();
+        Mount.init(&APM_RC, &IRCamera, 5, 6);
 }
 
 void loop()
