@@ -26,16 +26,35 @@ AAP_IRCamera::AAP_IRCamera()
 void AAP_IRCamera::init()
 {
 	_IRsensorAddress = 0xB0;
-	_slaveAddress = _IRsensorAddress >> 1;   // This results in 0x21 as the address to pass to TWI
+	_slaveAddress = _IRsensorAddress >> 1;   
 	
 	I2c.begin();
 	// IR sensor initialize
 	Write_2bytes(0x30,0x01); delay(10);
 	Write_2bytes(0x30,0x08); delay(10);
+	
+	//Recommended Sensitivity
 	Write_2bytes(0x06,0x90); delay(10);
-	Write_2bytes(0x08,0xC0); delay(10);
-	Write_2bytes(0x1A,0x40); delay(10);
-	Write_2bytes(0x33,0x33); delay(10);
+	Write_2bytes(0x08,0xC0); delay(10);	
+	Write_2bytes(0x1A,0x40); delay(10); 
+	
+	//Low Sensitivity
+	/*Write_2bytes(0x00, 0x02); delay(10);
+	Write_2bytes(0x01, 0x00); delay(10);
+	Write_2bytes(0x02, 0x00); delay(10);
+	Write_2bytes(0x03, 0x71); delay(10);
+	Write_2bytes(0x04, 0x01); delay(10);
+	Write_2bytes(0x05, 0x00); delay(10);
+	Write_2bytes(0x06, 0x64); delay(10);	//max blob size - ranges from 0x62 to 0xC8
+	Write_2bytes(0x07, 0x00); delay(10);	
+	Write_2bytes(0x08, 0xFE); delay(10);	//gain - smaller value = higher gain
+	Write_2bytes(0x1A, 0xFD); delay(10);	//gain limit - must be less than gain
+	Write_2bytes(0x1B, 0x05); delay(10);*/	//min blob size - ranges from 3 to 5
+	
+	//Write_2bytes(0x33,0x33); delay(10); //Extended data format
+	Write_2bytes(0x33,0x05); delay(10); //Full data format
+	
+	Write_2bytes(0x30,0x08); delay(10);
 	delay(100);
 }
 
@@ -43,7 +62,7 @@ void
 AAP_IRCamera::getRawData(Vector2i sources[])
 {
 	I2c.beginTransmission(_slaveAddress);
-	I2c.send(0x36);
+	I2c.send(0x36);							// WTF?
 	I2c.endTransmission();
 	
 	I2c.requestFrom(_slaveAddress, 16);        // Request the 2 byte heading (MSB comes first)
@@ -66,6 +85,37 @@ AAP_IRCamera::getRawData(Vector2i sources[])
 	}
 	
 }
+
+void AAP_IRCamera::getRawDataFull(Vector2i sources[], uint8_t intensity[])
+{
+	I2c.beginTransmission(_slaveAddress);
+	I2c.send(0x36);							
+	I2c.endTransmission();
+	
+	I2c.requestFrom(_slaveAddress, 37);
+	for (int i=0;i<37;i++) { _data_buf[i]=0; }
+	
+	int i = 0;
+	
+	while(I2c.available() && i < 37) { 
+		_data_buf[i] = I2c.receive();
+		i++;
+	}
+	
+	int s = 0;
+	
+	for(int i=0; i<4; i++) {
+		sources[i].x = _data_buf[i*9+1];
+		sources[i].y = _data_buf[i*9+2];
+		s = _data_buf[i*9+3];
+		sources[i].x += (s & 0x30) <<4;
+		sources[i].y += (s & 0xC0) <<2;
+		intensity[i] = _data_buf[i*9+9];
+	}
+	
+
+}
+
 
 Vector3f
 AAP_IRCamera::getPosition()
