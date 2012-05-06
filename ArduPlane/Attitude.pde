@@ -117,41 +117,77 @@ static void stabilize()
 	//#if(ROLL_SLEW_LIMIT != 0)
 	//	g.channel_roll.servo_out = roll_slew_limit(g.channel_roll.servo_out);
 	//#endif
-
-        // Begin Landing Sequence
-        float altitude = aapSonar.getDistance() - 15;
-        float setpoint = 50; // in centimeters
         
-        if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
-          // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
-          // Don't try to dive or climb, just use IMU to stabilize
+        
+        
+        // Read throttle input to choose between maintain altitude and landing
+        if (g.channel_throttle.control_in > 50) {
+          // Maintain Altitude
+          float altitude = aapSonar.getDistance() - 15;
+          float setpoint = 200; // in centimeters
           
-        } else {
-          // Control throttle, limited betweeen 75% and 100%
-          //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
-          //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
-          
-          // Also use elevator
-          float pitchCorrection = (setpoint - altitude) * 15;
-          // channel_pitch.servo_out can range from +/- 2500
-          // Limit pitchCorrection
-          if (pitchCorrection > 2000) {      // Be more agressive when climbing
-            pitchCorrection = 2000;
-          } else if (pitchCorrection < -20) {  // Force minimal dive
-            pitchCorrection = -20;
+          if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
+            // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
+            // Don't try to dive or climb, just use IMU to stabilize
+            
+          } else {
+            // Control throttle, limited betweeen 75% and 100%
+            //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
+            //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
+            
+            // Also use elevator
+            float pitchCorrection = (setpoint - altitude) * 50;
+            // channel_pitch.servo_out can range from +/- 2500
+            // Limit pitchCorrection
+            if (pitchCorrection > 2500) {      // Be more agressive when climbing
+              pitchCorrection = 2500;
+            } else if (pitchCorrection < -20) {  // Force minimal dive
+              pitchCorrection = -20;
+            }
+  
+            g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward/downwards bias
           }
-
-          g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward/downwards bias
-        }
-        
-        // Throttle off at low altitues
-        if (altitude > 200) {
-          g.channel_throttle.servo_out = 15;
+          
+          // Throttle control
+          if (altitude > 200) {
+            g.channel_throttle.servo_out = 15;
+          } else {
+            g.channel_throttle.servo_out = 25;
+          }
         } else {
-          g.channel_throttle.servo_out = 0;
+          // Landing
+          float altitude = aapSonar.getDistance() - 15;
+          float setpoint = 50; // in centimeters
+          
+          if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
+            // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
+            // Don't try to dive or climb, just use IMU to stabilize
+            
+          } else {
+            // Control throttle, limited betweeen 75% and 100%
+            //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.05, 0.00, 75, 100);
+            //g.channel_throttle.servo_out = (int)aapVC.getOutput(setpoint, altitude, 0.5, 0.00, 95, 100);
+            
+            // Also use elevator
+            float pitchCorrection = (setpoint - altitude) * 15;
+            // channel_pitch.servo_out can range from +/- 2500
+            // Limit pitchCorrection
+            if (pitchCorrection > 2000) {      // Be more agressive when climbing
+              pitchCorrection = 2000;
+            } else if (pitchCorrection < -20) {  // Force minimal dive
+              pitchCorrection = -20;
+            }
+  
+            g.channel_pitch.servo_out += pitchCorrection;  // Add in slight upward/downwards bias
+          }
+          
+          // Throttle off when just about to land
+          if (altitude > 200) {
+            g.channel_throttle.servo_out = 15;
+          } else {
+            g.channel_throttle.servo_out = 0;
+          }
         }
-        
-        // End Landing Sequence
 }
 
 static void crash_checker()
