@@ -173,7 +173,14 @@ static void stabilize()
             g.channel_rudder.servo_out = -4000;
           }
           */
-          g.channel_rudder.servo_out = Mount.getPan()*-200;
+          float rudderCorrection = Mount.getPan()*-200;
+          // Limit rudderCorrection
+          if (rudderCorrection > 3000) {      // Be more agressive when climbing
+            rudderCorrection = 3000;
+          } else if (rudderCorrection < -3000) {  // Force minimal dive
+            rudderCorrection = -3000;
+          }
+          g.channel_rudder.servo_out += rudderCorrection;
 
         } else {
           // Landing
