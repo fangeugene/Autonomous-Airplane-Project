@@ -8,6 +8,7 @@
 #include "../AP_Math/vector3.h"
 
 #include "../APM_RC/APM_RC.h" // ArduPilot Mega RC Library
+#include "../AAP_IRCamera/AAP_IRCamera.h"
 
 #define PITCH_DEGS_PER_PIXEL 0.044f
 #define YAW_DEGS_PER_PIXEL 0.043f
@@ -19,6 +20,7 @@ class AAP_Mount
 		float pan, tilt;
 		int panServoCh, tiltServoCh;
 		APM_RC_APM1* APM_RC;
+		AAP_IRCamera* IRCamera;
 
 		/** Returns the mapped integer of "value". This linear map F is defined such that:
 		  * F(value_min) = mapped_min
@@ -51,15 +53,16 @@ class AAP_Mount
 	public:
 		AAP_Mount() {}
 
-		void init(APM_RC_APM1* p_APM_RC, int p_panServoCh, int p_tiltServoCh) {
+		void init(APM_RC_APM1* p_APM_RC, AAP_IRCamera* p_IRCamera, int p_panServoCh, int p_tiltServoCh) {
 			APM_RC = p_APM_RC;
+			IRCamera = p_IRCamera;
 			panServoCh = p_panServoCh;
 			tiltServoCh = p_tiltServoCh;
 		}
 
 		void forwardKinematics(const Matrix3f& reference_frame, Vector3f& track, const float& pan, const float& tilt) {
 			Matrix3f calc_rotation = Matrix3f(ToRad(pan), reference_frame.col(2)) * reference_frame;
-			calc_rotation = Matrix3f(ToRad(tilt), calc_rotation.col(0)) * calc_rotation;
+			calc_rotation = Matrix3f(ToRad(90.0-tilt), calc_rotation.col(0)) * calc_rotation;
 			track = calc_rotation.col(1);
 		}
 
@@ -157,6 +160,44 @@ class AAP_Mount
 			yaw += dYaw;
 			setTilt(pitch);
 			setPan(yaw);
+		}
+
+		void update(float yaw, float pitch, float roll, Vector3f& camera_position) {
+			//APM's rotation
+		    Matrix3f APM_rotation = Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0))
+		                        	* Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
+		                        	* Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0));
+
+		    //Adjust the pitch shift from the APM to the mount's base
+		    Matrix3f mount_rotation = Matrix3f(ToRad(-65.0), APM_rotation.col(0)) * APM_rotation;
+
+		    Matrix3f camera_rotation;
+		    forwardKinematics(mount_rotation, camera_rotation, getPan(), getTilt());
+		    IRCamera->getTransform2(camera_position, camera_rotation);
+
+		    //Get the IR positions in order to update the mount's orientation
+		    //Get the raw IR positions
+		    Vector2i ir_pos_raw[4];
+		    IRCamera->getRawData(ir_pos_raw);
+		    //Filter out the valid IR positions
+		    vector<Vector2f> ir_pos;
+		    for (int i=0; i<4; i++)
+		      if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
+			ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
+
+		    //Update the mount's orientation
+		    if (ir_pos.size() > 0) {
+				//Average of the IR sources positions
+				Vector2f mean_ir_pos(0.0, 0.0);
+				for (int i=0; i<ir_pos.size(); i++)
+				mean_ir_pos += ir_pos[i];
+				mean_ir_pos /= ((float) ir_pos.size());
+				//Track this position
+				update(Vector2i((int) mean_ir_pos.x, (int) mean_ir_pos.y));
+		    } else {
+				setPan(0.0);
+				setTilt(60.0);
+		    }
 		}
 };
 #endif

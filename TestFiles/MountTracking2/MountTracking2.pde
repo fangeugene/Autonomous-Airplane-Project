@@ -18,6 +18,7 @@
 #include <APM_RC.h> // ArduPilot Mega RC Library
 APM_RC_APM1 APM_RC;
 
+//Eugene
 #include <AAP_IRCamera.h>
 #include <AAP_Mount.h>
 #include <I2C.h>
@@ -129,8 +130,9 @@ void setup(void)
   imu.init(IMU::COLD_START, delay, flash_leds, &timer_scheduler);
   dcm.matrix_reset();
   
+  //Eugene
   IRCamera.init();
-  Mount.init(&APM_RC, 0, 1);
+  Mount.init(&APM_RC, &IRCamera, 0, 1);
   
   delay(1000);
 }
@@ -162,69 +164,8 @@ void loop(void)
     float yaw = (float)dcm.yaw_sensor / 100.0;
     float pitch = (float)dcm.pitch_sensor / 100.0;
     float roll = (float)dcm.roll_sensor / 100.0;
-    Serial.printf(" YPR %3.2f %3.2f %3.2f END\n", yaw, pitch, roll);
-    //APM's rotation
-    Matrix3f APM_rotation = Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0))
-                        * Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
-                        * Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0));
-    
-    Vector2i ir_pos_raw[4];
-    IRCamera.getRawData(ir_pos_raw);
-    Serial.printf(" IRPOS %i %i %i %i %i %i %i %i END\n", ir_pos_raw[0].x, ir_pos_raw[0].y,
-                                                          ir_pos_raw[1].x, ir_pos_raw[1].y,
-                                                          ir_pos_raw[2].x, ir_pos_raw[2].y,
-                                                          ir_pos_raw[3].x, ir_pos_raw[3].y);
 
-    //There is a -90 pitch shift from the APM to the mount's base
-    //Adjust the 90.0 deg if necessary
-    Matrix3f mount_rotation = Matrix3f(ToRad(-65.0), APM_rotation.col(0)) * APM_rotation;
-    
-    Serial.printf(" MOUNTROT ");
-    printMatrix(mount_rotation);
-    Serial.printf(" END ");
-    
-    //There is a 180 shift between the end of the mount and the camera
-    Matrix3f camera_rotation;
-    Mount.forwardKinematics(mount_rotation, camera_rotation, Mount.getPan(), Mount.getTilt());
-    
-    //Filter out the valid IR positions
-    vector<Vector2f> ir_pos;
-    for (int i=0; i<4; i++)    
-      if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
-	ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
-    
-    //Direction the mount's end should track
-    Vector3f track;
-    if (ir_pos.size() > 0) {
-      //Average of the IR sources positions
-      Vector2f mean_ir_pos(0.0, 0.0);
-      for (int i=0; i<ir_pos.size(); i++)
-        mean_ir_pos += ir_pos[i];
-      mean_ir_pos /= ((float) ir_pos.size());
-      //Track this position
-      Mount.update(Vector2i((int) mean_ir_pos.x, (int) mean_ir_pos.y));
-    } else {
-      Mount.setPan(0.0);
-      Mount.setTilt(60.0);
-    }
-    
-    Serial.printf(" PRECAMROT ");
-    printMatrix(camera_rotation);
-    Serial.printf(" END ");
-    
     Vector3f camera_position;
-    //Matrix3f APM_to_camera = camera_rotation * APM_rotation.transpose();
-    //IRCamera.getTransform2(camera_position, camera_rotation);
-    //APM_rotation = APM_to_camera.transposed() * camera_rotation;
-    
-    Serial.printf(" CAMPOS ");
-    printVector(camera_position);
-    Serial.printf(" END ");
-    Serial.printf(" CAMROT ");
-    printMatrix(camera_rotation);
-    Serial.printf(" END ");
-    
-    Serial.printf(" TRACK %3.2f %3.2f %3.2f END\n", track.x, track.y, track.z);
-    Serial.printf(" PANTILT %3.2f %3.2f END\n", Mount.getPan(), Mount.getTilt());
+    Mount.update(yaw, pitch, roll, camera_position);
   }
 }
