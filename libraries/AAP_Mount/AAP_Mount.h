@@ -152,8 +152,8 @@ class AAP_Mount
 			int xError = track_pixel.x - 512;
 			int yError = track_pixel.y - 384;
 			// servo velocity
-			float dPitch = PITCH_DEGS_PER_PIXEL*float(-yError);
-			float dYaw = YAW_DEGS_PER_PIXEL*float(-xError);
+			float dPitch = 0.12*PITCH_DEGS_PER_PIXEL*float(-yError);
+			float dYaw = 0.12*YAW_DEGS_PER_PIXEL*float(-xError);
 			clamp(dPitch, -MAX_MOVE, MAX_MOVE);
 			clamp(dYaw, -MAX_MOVE, MAX_MOVE);
 			pitch += dPitch;

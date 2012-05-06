@@ -637,17 +637,15 @@ static float 			load;
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
-
+AAP_IRCamera IRCamera;
+AAP_Mount Mount;
 void setup() {
 	memcheck_init();
 	init_ardupilot();
 
         // IR Camera
-        AAP_IRCamera IRCamera;
-        AAP_Mount Mount;
-        
         IRCamera.init();
-        Mount.init(&APM_RC, &IRCamera, 5, 6);
+        Mount.init(&APM_RC, &IRCamera, 4, 5);
 }
 
 void loop()
