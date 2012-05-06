@@ -51,6 +51,16 @@ public:
 	// setting ctor
 	Matrix3<T>(const T ax, const T ay, const T az, const T bx, const T by, const T bz, const T cx, const T cy, const T cz): a(ax,ay,az), b(bx,by,bz), c(cx,cy,cz) {}
 
+	// constructor from angle and axis
+	Matrix3<T>(const float t, const Vector3<T> u)
+	{
+		float ct = cos(t);
+		float st = sin(t);
+		a(ct+u.x*u.x*(1-ct),		u.x*u.y*(1-ct)-u.z*st,	u.x*u.z*(1-ct)+u.y*st);
+		b(u.y*u.x*(1-ct)+u.z*st,	ct+u.y*u.y*(1-ct),		u.y*u.z*(1-ct)-u.x*st);
+		c(u.z*u.x*(1-ct)-u.y*st,	u.z*u.y*(1-ct)+u.x*st,	ct+u.z*u.z*(1-ct));
+	}
+
 	// function call operator
 	void operator () (const Vector3<T> a0, const Vector3<T> b0, const Vector3<T> c0)
 	{	a = a0; b = b0; c = c0;  }
@@ -123,6 +133,57 @@ public:
 	}
 	Matrix3<T> transpose(void)
 	{	return *this = transposed();	}
+
+	Vector3<T> row(int i)
+	{
+		if (i == 0)
+			return a;
+		else if (i == 1)
+			return b;
+		else
+			return c;
+	}
+
+	const Vector3<T> row(int i) const
+	{
+		if (i == 0)
+			return a;
+		else if (i == 1)
+			return b;
+		else
+			return c;
+	}
+
+	Vector3<T> col(int i)
+	{
+		if (i == 0)
+			return Vector3<T>(a.x, b.x, c.x);
+		else if (i == 1)
+			return Vector3<T>(a.y, b.y, c.y);
+		else
+			return Vector3<T>(a.z, b.z, c.z);
+	}
+
+	const Vector3<T> col(int i) const
+	{
+		if (i == 0)
+			return Vector3<T>(a.x, b.x, c.x);
+		else if (i == 1)
+			return Vector3<T>(a.y, b.y, c.y);
+		else
+			return Vector3<T>(a.z, b.z, c.z);
+	}
+
+	void setCol(int i, Vector3<T> v)
+	{
+		if (i == 0) {
+			a.x = v.x;	b.x = v.y;	c.x = v.z;
+		} else if (i == 1) {
+			a.y = v.x;	b.y = v.y;	c.y = v.z;
+		} else {
+			a.z = v.x;	b.z = v.y;	c.z = v.z;
+		}
+	}
 
 };
 

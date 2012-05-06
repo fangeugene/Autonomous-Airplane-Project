@@ -1,0 +1,86 @@
+README for Wii Controller Tracking Package.
+Copyright (c) 2008-2009 Oliver Kreylos
+
+Overview
+========
+
+The Wii Controller Tracking Package contains source code and three test
+programs to use the Nintendo Wii controller as a 6-DOF input device,
+tracked in 3D position and 3D orientation. The test programs serve only
+as an illustration of how to use the package's library classes; real
+applications are expected to use the library classes directly.
+
+The top-level library classes are:
+
+Wiimote - Class representing a Nintendo Wii controller connected via the
+Linux Bluetooth protocol stack.
+
+LevenbergMarquardtMinimizer2 - Templatized class implementing a
+variation of the Levenberg-Marquardt non-linear optimization algorithm.
+The class is templatized by a fitter class, which defines the non-linear
+optimization problem.
+
+CameraFitter - A fitter class for the LevenbergMarquardtMinimizer2 class
+to determine a camera's 3D position and orientation based on known
+intrinsic camera parameters and the observed projected positions of four
+points at known positions in 3D space.
+
+Other, lower-level, library classes are contained in the Misc, Threads,
+Math, and Geometry subdirectories. These classes are borrowed from the
+Vrui VR development toolkit
+(http://idav.ucdavis.edu/~okreylos/ResDev/Vrui).
+
+The test programs are:
+
+WiiTest - Tests the Wiimote class; connects to a Wiimote and prints the
+current button, joystick, and accelerometer values.
+
+LevenbergMarquardtTest - Tests the Levenberg-Marquardt non-linear
+optimization classes.
+
+SimpleWiiCameraTest - Tests the Wiimote camera fitter used to calculate
+the Wiimote's 3D position and orientation based on the observed
+positions of four LEDs arranged in a fixed, non-planar beacon. The
+source code contains the logic to feed LED positions reported by the Wii
+controller's internal camera to a Levenberg-Marquardt optimization
+object connected to a CameraFitter object. This includes basic setup
+code and the (experimental) algorithm to match reported camera positions
+to target LEDs. To properly test the camera fitting, it is necessary to
+measure the camera's intrinsic parameters (reasonable defaults are
+provided), to build a beacon consisting of four infrared LEDs in a
+non-planar arrangement, and to measure the exact positions of the LEDs
+on the beacon.
+
+Prerequisites
+=============
+
+Building the package requires GNU make, sed, and find, the GNU C++
+compiler (version 3 or later), the pthreads library, and the Linux
+Bluetooth library (bluez).
+
+Build instructions
+==================
+
+On a regular Linux distribution with the GNU C++ compiler and the
+Bluetooth library installed in their default places (/usr/bin and
+/usr/lib(64), respectively), building the package just requires running
+make. "make DEBUG=1" creates debugging versions of all programs.
+
+If GNU C++ is installed in another directory, the CPPCOMP makefile
+variable has to be adjusted.
+
+If bluez is installed in another directory, the BLUETOOTH_BASEDIR
+makefile variable has to be pointed to the directory containing bluez's
+include and library files. For example, if bluez's include files are in
+/usr/local/include, and its library files are in /usr/local/lib (or
+/usr/local/lib64 on a 64-bit architecture), BLUETOOTH_BASEDIR has to be
+set to /usr/local. If the include or library files are not in the
+standard subdirectories, the BLUETOOTH_INCLUDEDIR and BLUETOOTH_LIBDIR
+variables can be adjusted separately.
+
+The library and test programs can also be built using environments other
+than GNU make; the list of sources that have to be linked for each test
+program are listed at the top of the makefile. The only compiler flag
+required by the sources is -I. to look for include files underneath the
+current directory, and the only external libraries used are pthread and
+bluetooth.

@@ -68,6 +68,7 @@ static float G_Dt						= 0.02;
 ////////////////////////////////////////////////////////////////////////////////
 // Time in miliseconds of start of main control loop.  Milliseconds
 static unsigned long 	fast_loopTimer;
+static unsigned long 	medium_loopCounter = 0;
 // Number of milliseconds used in last main loop cycle
 static uint8_t 		delta_ms_fast_loop;
 
@@ -85,26 +86,16 @@ int linearMap(int value, int value_min, int value_max, int mapped_min, int mappe
   return mapped_min + (((float)(value - value_min))/((float)(value_max-value_min)))*(mapped_max-mapped_min);
 }
 
-/** The same as linear_map except that if the mapped integer is outside the range 
-  * [mapped_min, mapped_max], then the mapped integer is clipped to either mapped_min
-  * or mapped max, whichever is the closest to the mapped integer.
-  **/
-int linearMapClip(int value, int value_min, int value_max, int mapped_min, int mapped_max) {
-  int mapped = linearMap(value, value_min, value_max, mapped_min, mapped_max);
-  if (mapped_min < mapped_max) {
-    if (mapped < mapped_min)
-      mapped = mapped_min;
-    else if (mapped > mapped_max)
-      mapped = mapped_max;
-  } else {
-    if (mapped < mapped_max)
-      mapped = mapped_max;
-    else if (mapped > mapped_min)
-      mapped = mapped_min;
-  }
-  return mapped;
+int panAngleToPW(int angle) {
+  return linearMap(angle, -45+13, 45+13, 1000, 2000);
 }
 
+int tiltAngleToPW(int angle) {
+  int servo_angle = 0.005404 * pow(angle, 2.0) + 1.54987 * ((float) angle) - 3.02604;
+  return linearMap(servo_angle, -45-1, 45-1, 2000, 1000);
+}
+
+/*
 int servoToTiltAngle(int servoAngle) {
   return -0.001468 * pow(servoAngle, 2.0) + 0.64516 * ((float) servoAngle) + 1.95896;
 }
@@ -112,6 +103,7 @@ int servoToTiltAngle(int servoAngle) {
 int tiltToServoAngle(int tiltAngle) {
   return 0.005404 * pow(tiltAngle, 2.0) + 1.54987 * ((float) tiltAngle) - 3.02604;
 }
+*/
 
 void setup(void)
 {
@@ -142,7 +134,7 @@ void loop(void)
     // IMU
     // ---
     dcm.update_DCM();
-    
+
     // We are using the IMU
     // ---------------------
     Vector3f gyros = imu.get_gyro();
@@ -156,18 +148,14 @@ void loop(void)
       accels.x, accels.y, accels.z);
     
     int yaw = (uint16_t)dcm.yaw_sensor / 100;
-    // The function linearMapClip below maps yaw values to servoValue values
-    // yaw        servo arm angle      servoValue                             _
-    // 0          -45                  2000            _                       | clipped region
-    // 135        -45                  2000             |                     _|
-    // 135 + 45     0                  1500             | linear map region   _
-    // 135 + 90    45                  1000            _|                      | clipped region
-    // 359         45                  1000                                   _|
-    int servoValue = linearMapClip(yaw, 135, 135+90, 2000, 1000);
-    //int tilt = yaw - 150;
-    //int servoValue = linearMapClip(tiltToServoAngle(tilt)+90, 0, 90, 2000, 1000);
+    int pitch = (int)dcm.pitch_sensor / 100;
+    int roll = (int)dcm.roll_sensor / 100;
+    int yawServo   = panAngleToPW(yaw-180);
+    int pitchServo = tiltAngleToPW(-pitch);
     
-    Serial.printf("Yaw: %d  Servo 0 Value: %d\n", yaw, servoValue);
-    APM_RC.OutputCh(0, servoValue);
+    Serial.printf("Yaw:   %d  Servo 0 Value: %d\n", yaw,   yawServo);
+    Serial.printf("Pitch: %d  Servo 1 Value: %d\n", pitch, pitchServo);
+    APM_RC.OutputCh(0, yawServo);
+    APM_RC.OutputCh(1, pitchServo);
   }
 }
