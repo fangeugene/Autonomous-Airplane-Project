@@ -154,6 +154,9 @@ static void stabilize()
           } else {
             g.channel_throttle.servo_out = 25;
           }
+          
+          // Rudder control via IR
+          g.channel_rudder.servo_out = 0;
         } else {
           // Landing
           float altitude = aapSonar.getDistance() - 15;
