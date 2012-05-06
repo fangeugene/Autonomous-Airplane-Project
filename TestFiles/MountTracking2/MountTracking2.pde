@@ -175,34 +175,37 @@ void loop(void)
                                                           ir_pos_raw[2].x, ir_pos_raw[2].y,
                                                           ir_pos_raw[3].x, ir_pos_raw[3].y);
 
-    //There is a 180 shift between the mount's base and the APM
-    Matrix3f mount_rotation = Matrix3f(ToRad(180.0), APM_rotation.col(2)) * APM_rotation;
+    //There is a -90 pitch shift from the APM to the mount's base
+    //Adjust the 90.0 deg if necessary
+    Matrix3f mount_rotation = Matrix3f(ToRad(-65.0), APM_rotation.col(0)) * APM_rotation;
+    
+    Serial.printf(" MOUNTROT ");
+    printMatrix(mount_rotation);
+    Serial.printf(" END ");
+    
     //There is a 180 shift between the end of the mount and the camera
     Matrix3f camera_rotation;
     Mount.forwardKinematics(mount_rotation, camera_rotation, Mount.getPan(), Mount.getTilt());
-    //Mount.forwardKinematics(mount_rotation, camera_rotation, 0.0, 90.0);
-    camera_rotation = Matrix3f(ToRad(180.0), camera_rotation.col(1)) * camera_rotation;
     
     //Filter out the valid IR positions
     vector<Vector2f> ir_pos;
-    for (int i=0; i<4; i++)
+    for (int i=0; i<4; i++)    
       if ((ir_pos_raw[i].x != 1023) && (ir_pos_raw[i].y != 1023))
 	ir_pos.push_back(Vector2f((float) ir_pos_raw[i].x, (float) ir_pos_raw[i].y));
     
     //Direction the mount's end should track
     Vector3f track;
-    if (ir_pos.size() > 0) {  //The mount tracks the average of the IR sources
+    if (ir_pos.size() > 0) {
+      //Average of the IR sources positions
       Vector2f mean_ir_pos(0.0, 0.0);
       for (int i=0; i<ir_pos.size(); i++)
         mean_ir_pos += ir_pos[i];
       mean_ir_pos /= ((float) ir_pos.size());
-      Vector2f ccd_center(512,384);
-      float focal_length = 1280;
-      Vector2f off_center = mean_ir_pos - ccd_center;
-      track = camera_rotation * Vector3f(off_center.x, focal_length, off_center.y);
-      track.normalize();
-    } else {  //The mount tracks the +z axis
-      track = Vector3f(0.0, 0.0, 1.0);
+      //Track this position
+      Mount.update(Vector2i((int) mean_ir_pos.x, (int) mean_ir_pos.y));
+    } else {
+      Mount.setPan(0.0);
+      Mount.setTilt(60.0);
     }
     
     Serial.printf(" PRECAMROT ");
@@ -211,7 +214,7 @@ void loop(void)
     
     Vector3f camera_position;
     //Matrix3f APM_to_camera = camera_rotation * APM_rotation.transpose();
-    IRCamera.getTransform2(camera_position, camera_rotation);
+    //IRCamera.getTransform2(camera_position, camera_rotation);
     //APM_rotation = APM_to_camera.transposed() * camera_rotation;
     
     Serial.printf(" CAMPOS ");
@@ -221,9 +224,6 @@ void loop(void)
     printMatrix(camera_rotation);
     Serial.printf(" END ");
     
-    Mount.update(mount_rotation, track);
-    //Mount.setPan(0.0);
-    //Mount.setTilt(90.0);
     Serial.printf(" TRACK %3.2f %3.2f %3.2f END\n", track.x, track.y, track.z);
     Serial.printf(" PANTILT %3.2f %3.2f END\n", Mount.getPan(), Mount.getTilt());
   }

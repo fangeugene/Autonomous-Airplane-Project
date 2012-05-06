@@ -9,6 +9,10 @@
 
 #include "../APM_RC/APM_RC.h" // ArduPilot Mega RC Library
 
+#define PITCH_DEGS_PER_PIXEL 0.044f
+#define YAW_DEGS_PER_PIXEL 0.043f
+#define MAX_MOVE 30
+
 class AAP_Mount
 {
 	private:
@@ -45,11 +49,7 @@ class AAP_Mount
 		*/
 
 	public:
-		AAP_Mount() {
-			pan = 0.0;
-			tilt = 90.0;
-			APM_RC = NULL;
-		}
+		AAP_Mount() {}
 
 		void init(APM_RC_APM1* p_APM_RC, int p_panServoCh, int p_tiltServoCh) {
 			APM_RC = p_APM_RC;
@@ -66,6 +66,8 @@ class AAP_Mount
 		void forwardKinematics(const Matrix3f& reference_frame, Matrix3f& rotation, const float& pan, const float& tilt) {
 			rotation = Matrix3f(ToRad(pan), reference_frame.col(2)) * reference_frame;
 			rotation = Matrix3f(ToRad(tilt), rotation.col(0)) * rotation;
+			rotation = Matrix3f(ToRad(180.0), rotation.col(1)) * rotation;
+			rotation = Matrix3f(ToRad(180.0), rotation.col(0)) * rotation;
 		}
 
 		void inverseKinematics(const Matrix3f& reference_frame, const Vector3f& track, float& pan, float& tilt) {
@@ -132,6 +134,29 @@ class AAP_Mount
 				setPan(new_pan);
 				setTilt(new_tilt);
 			}
+		}
+
+		// clamp x into the interval [a, b]
+		inline void clamp(float& x, const float& a, const float& b)
+		{
+			if (x < a) x = a;
+			else if (x > b) x = b;
+		}
+
+		void update(Vector2i track_pixel) {
+			float pitch = getTilt();
+			float yaw = getPan();
+			int xError = track_pixel.x - 512;
+			int yError = track_pixel.y - 384;
+			// servo velocity
+			float dPitch = PITCH_DEGS_PER_PIXEL*float(-yError);
+			float dYaw = YAW_DEGS_PER_PIXEL*float(-xError);
+			clamp(dPitch, -MAX_MOVE, MAX_MOVE);
+			clamp(dYaw, -MAX_MOVE, MAX_MOVE);
+			pitch += dPitch;
+			yaw += dYaw;
+			setTilt(pitch);
+			setPan(yaw);
 		}
 };
 #endif
