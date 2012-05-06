@@ -119,15 +119,14 @@ static void stabilize()
 	//	g.channel_roll.servo_out = roll_slew_limit(g.channel_roll.servo_out);
 	//#endif
         
-        
-        
-        // IR Camera
+        // AAP IR Camera
         float yaw = (float)dcm.yaw_sensor / 100.0;
         float pitch = (float)dcm.pitch_sensor / 100.0;
         float roll = (float)dcm.roll_sensor / 100.0;
         Vector3f camera_position;
         Mount.update(yaw, pitch, roll, camera_position);
-  
+        
+        
         // Read throttle input to choose between maintain altitude and landing
         if (g.channel_throttle.control_in > 50) {
           // Maintain Altitude
@@ -165,15 +164,16 @@ static void stabilize()
           
           // Rudder control via IR
           // Ranges from +/- 5000
-          if (camera_position.x > 0) {
+          /*
+          if (Mount.getPan() > 0) {
             g.channel_rudder.servo_out = 0;
-          } else if (camera_position.x > 0) {
+          } else if (Mount.getPan() > 0) {
             g.channel_rudder.servo_out = 4000;
           } else {
             g.channel_rudder.servo_out = -4000;
           }
-          
-          //g.channel_rudder.servo_out = camera_position.x*15
+          */
+          g.channel_rudder.servo_out = Mount.getPan()*-200;
 
         } else {
           // Landing

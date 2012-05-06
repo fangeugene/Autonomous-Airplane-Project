@@ -877,10 +877,13 @@ Serial.println(tempaccel.z, DEC);
 			slow_loop();
 			break;
 	}
+
+
 }
 
 static void slow_loop()
 {
+     
 	// This is the slow (3 1/3 Hz) loop pieces
 	//----------------------------------------
 	switch (slow_loopCounter){

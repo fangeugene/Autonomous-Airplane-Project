@@ -163,7 +163,7 @@ class AAP_Mount
 		}
 
 		void update(float yaw, float pitch, float roll, Vector3f& camera_position) {
-			//APM's rotation
+			/*//APM's rotation
 		    Matrix3f APM_rotation = Matrix3f(-ToRad(yaw), Vector3f(0.0, 0.0, 1.0))
 		                        	* Matrix3f(ToRad(pitch), Vector3f(1.0, 0.0, 0.0))
 		                        	* Matrix3f(ToRad(roll), Vector3f(0.0, 1.0, 0.0));
@@ -174,7 +174,7 @@ class AAP_Mount
 		    Matrix3f camera_rotation;
 		    forwardKinematics(mount_rotation, camera_rotation, getPan(), getTilt());
 		    IRCamera->getTransform2(camera_position, camera_rotation);
-
+			*/
 		    //Get the IR positions in order to update the mount's orientation
 		    //Get the raw IR positions
 		    Vector2i ir_pos_raw[4];

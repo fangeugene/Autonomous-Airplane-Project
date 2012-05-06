@@ -61,7 +61,7 @@ void AAP_IRCamera::init()
 void
 AAP_IRCamera::getRawData(Vector2i sources[])
 {
-	/*
+	
 	I2c.beginTransmission(_slaveAddress);
 	I2c.send(0x36);							// WTF?
 	I2c.endTransmission();
@@ -83,30 +83,36 @@ AAP_IRCamera::getRawData(Vector2i sources[])
 		s = _data_buf[i*3+3];
 		sources[i].x += (s & 0x30) <<4;
 		sources[i].y += (s & 0xC0) <<2;
-	}*/
+	}
+	/*
 	uint8_t intensity[4];
-   getRawDataFull(sources, intensity);
-   int min1_index = 0;
-   int min2_index = 0;
-   int min1 = 1024;
-   int min2 = 1024;
-   for(int i=0; i<4; i++){
+	getRawDataFull(sources, intensity);
+	int min1_index = 0;
+	int min2_index = 0;
+	uint8_t min1 = 1024;
+	uint8_t min2 = 1024;
+	for(int i=0; i<4; i++) {
+		   if (intensity[i] == 255) {
+				   intensity[i] = 0;
+		   }
+	}
+	for(int i=0; i<4; i++){
 		   if (intensity[i] <= min1){
 				   min1 = intensity[i];
 				   min1_index = i;
 		   }
-   }
-   for(int i=0; i<4; i++){
+	}
+	for(int i=0; i<4; i++){
 		   if ((intensity[i] <= min2) && (i != min1_index)){
 				   min2 = intensity[i];
 				   min2_index = i;
 		   }
-   }
-   sources[min1_index].x = 1023;
-   sources[min1_index].y = 1023;
-   sources[min2_index].x = 1023;
-   sources[min2_index].y = 1023;
-	
+	}
+	sources[min1_index].x = 1023;
+	sources[min1_index].y = 1023;
+	sources[min2_index].x = 1023;
+	sources[min2_index].y = 1023;
+	*/
 }
 
 void AAP_IRCamera::getRawDataFull(Vector2i sources[], uint8_t intensity[])
