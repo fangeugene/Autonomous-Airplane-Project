@@ -131,7 +131,7 @@ static void stabilize()
         if (g.channel_throttle.control_in > 50) {
           // Maintain Altitude
           float altitude = aapSonar.getDistance() - 15;
-          float setpoint = 200; // in centimeters
+          float setpoint = 250; // in centimeters
           
           if (altitude > 620) {  // 645cm is around the max distance the sonar sensor can report
             // The plane is actually above 620cm or it is an angle at which the sonar sensor cannot detect the ground
