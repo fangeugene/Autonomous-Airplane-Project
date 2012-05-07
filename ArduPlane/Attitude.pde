@@ -156,7 +156,7 @@ static void stabilize()
           }
           
           // Throttle control
-          if (altitude > 200) {
+          if (altitude > setpoint) {
             g.channel_throttle.servo_out = 15;
           } else {
             g.channel_throttle.servo_out = 25;
